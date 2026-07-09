@@ -1,0 +1,526 @@
+workspace "OmniWatch" "AI-Driven Cloud Ops Platform v2.0" {
+
+    !identifiers hierarchical
+
+    model {
+
+        // ============================================================
+        // PERSONAS
+        // ============================================================
+
+        opsEngineer     = person "Operations Engineer"    "Monitors incidents and manages policies"
+        executive       = person "Executive Stakeholder"  "Reviews business impact reports"
+        securityAnalyst = person "Security Analyst"       "Reviews security telemetry"
+        developer       = person "Developer"              "Investigates code-level issues and traces"
+
+        // ============================================================
+        // EXTERNAL SYSTEMS
+        // ============================================================
+
+        aws        = softwareSystem "AWS"              "EC2, EKS, RDS, Lambda, CloudWatch, Cost Explorer"
+        azure      = softwareSystem "Azure"            "VMs, AKS, Azure SQL, Azure Monitor, Cost Management"
+        gcp        = softwareSystem "GCP"              "Compute Engine, GKE, Cloud SQL, Logging, Billing"
+        kubernetes = softwareSystem "Kubernetes"       "Pods, Services, Deployments, Ingress, Helm"
+        appSources = softwareSystem "Applications"     "Microservices, REST APIs, Web Apps"
+        secSources = softwareSystem "Security Systems" "SIEM, Firewall Logs, Auth Logs"
+        llmSources = softwareSystem "LLM APIs"         "OpenAI, Anthropic, Google, Ollama, vLLM"
+        argocd     = softwareSystem "ArgoCD"           "GitOps Continuous Delivery for Kubernetes"
+        ansible    = softwareSystem "Ansible"          "Event-Driven Configuration Management"
+        terraform  = softwareSystem "Terraform"        "Infrastructure as Code for Cloud Resources"
+
+        // ============================================================
+        // OMNIWATCH SYSTEM
+        // ============================================================
+
+        omniwatch = softwareSystem "OmniWatch" "AI-Driven Cloud Ops Platform providing anomaly detection, root cause analysis, autonomous remediation, and digital twin simulation" {
+
+            // ========================================================
+            // LAYER 2: GHOSTCOLLECTOR (eBPF-Native Collection)
+            // ========================================================
+
+            ghostCollector = container "GhostCollector" "eBPF-native, zero-overhead collection engine with 6 collection modes" "eBPF, Go, Rust" {
+                tags "CollectionLayer"
+
+                ebpfProbes    = component "eBPF Kernel Probes"       "kprobes, uprobes, tracepoints, XDP/TC, LSM hooks for zero-code collection"     "libbpf, CO-RE"
+                bytecodeInject = component "Runtime Bytecode Injection" "JVMTI, CLR Profiling API, V8 hooks for JVM/.NET/Node.js"                    "Go"
+                otelReceiver  = component "OTLP Receiver"             "OTLP/gRPC + HTTP receiver with full OTel semantic conventions"                "OpenTelemetry"
+                cloudApiPoll  = component "Cloud API Polling"         "AWS/Azure/GCP APIs, K8s Watch, Cost APIs, Carbon APIs"                       "Go"
+                rumAgent      = component "RUM Agent"                 "Auto-injected JS snippet, mobile SDKs, Session Replay"                       "JavaScript"
+                llmObserver   = component "LLM Observability"         "Auto-discovers LangChain, LlamaIndex; tracks tokens, cost, latency"          "Go"
+                edgeProcessor = component "In-Agent Edge Processor"   "eBPF maps for in-kernel aggregation, only anomalous spans exported"          "Rust"
+                watchdog      = component "Self-Healing Watchdog"     "Health monitor, auto-restart, CPU budget enforcer"                           "Go"
+
+                ebpfProbes    -> edgeProcessor   "Raw kernel events"
+                bytecodeInject -> edgeProcessor  "Runtime call data"
+                otelReceiver  -> edgeProcessor   "OTLP telemetry"
+                cloudApiPoll  -> edgeProcessor   "Cloud resource data"
+                rumAgent      -> edgeProcessor   "User session data"
+                llmObserver   -> edgeProcessor   "LLM call data"
+                edgeProcessor -> watchdog        "Health status"
+            }
+
+            // ========================================================
+            // LAYER 3: STREAMFORGE (Intelligent Ingest Pipeline)
+            // ========================================================
+
+            streamForge = container "StreamForge" "Intelligent ingest pipeline with Entity Resolution, Windowing, and adaptive sampling" "Kafka, Flink, Python" {
+                tags "IngestionLayer"
+
+                receiptValidation = component "Receipt & Validation"     "Multi-protocol ingest, schema validation, mTLS, rate limiting"           "Kafka"
+                enrichmentEngine  = component "Enrichment Engine"        "Semantic Dictionary, Entity Resolution, Cost/Carbon/Geo enrichment"       "Flink"
+                entityResolution  = component "Entity Resolution Layer"  "Maps volatile IDs (pod UIDs, container IDs) to stable entities"           "Flink, RocksDB"
+                windowingLayer    = component "Windowing Layer"          "Flink tumbling windows, feature engineering, ML-ready feature vectors"     "Flink"
+                adaptiveIntel     = component "Adaptive Intelligence"    "Tail-based causal sampling, anomaly-prioritized routing"                  "Flink"
+                piiEngine         = component "Privacy-by-Default PII"   "Regex + ML-based PII detection and masking"                              "Python, Presidio"
+                topologyPublisher = component "Topology Delta Publisher"  "Publishes topology edges to TopoBrain (<500ms latency)"                  "Flink"
+
+                receiptValidation -> enrichmentEngine  "Validated telemetry"
+                enrichmentEngine  -> entityResolution  "Raw entities for stabilization"
+                entityResolution  -> windowingLayer    "Stable entity IDs"
+                windowingLayer    -> adaptiveIntel      "Aligned feature vectors"
+                adaptiveIntel     -> piiEngine          "Sampling decisions"
+                piiEngine         -> topologyPublisher  "Enriched, privacy-safe telemetry"
+            }
+
+            // ========================================================
+            // LAYER 4: NEXUSSTORE (Unified Data Lakehouse)
+            // ========================================================
+
+            nexusStore = container "NexusStore" "Unified data lakehouse with 4 storage tiers and NQL query language" "Arrow, ClickHouse, Parquet, Iceberg, Kuzu" {
+                tags "StorageLayer"
+
+                hotStore   = component "Hot Store"     "In-memory columnar store (Apache Arrow), last 2-6 hours, all anomalous signals"   "Apache Arrow"
+                warmStore  = component "Warm Store"    "ClickHouse cluster, last 90 days, sub-second aggregation"                        "ClickHouse"
+                coldStore  = component "Cold Store"    "Parquet + Iceberg on S3/GCS, petabyte-scale, time-travel queries"                "Apache Parquet, Iceberg"
+                graphStore = component "Graph Store"   "Apache Kuzu / NebulaGraph, entity nodes, dependency edges"                       "Apache Kuzu"
+                nqlEngine  = component "NQL Engine"    "Unified query language (superset of PromQL + LogQL + SQL)"                       "Go"
+
+                hotStore   -> warmStore   "TTL-based migration"
+                warmStore  -> coldStore   "Age-based archival"
+                graphStore -> nqlEngine   "Topology traversal"
+            }
+
+            // ========================================================
+            // LAYER 5: TOPOBRAIN (8-Layer Causal Knowledge Graph)
+            // ========================================================
+
+            topoBrain = container "TopoBrain" "8-layer causal knowledge graph with <500ms update latency" "Apache Kuzu, Flink, Python" {
+                tags "TopologyLayer"
+
+                graphDatabase    = component "Graph Database"       "Apache Kuzu / NebulaGraph storing entity nodes and dependency edges"     "Apache Kuzu"
+                topologyProcessor = component "Topology Processor"  "Processes topology deltas, creates/updates/expires edges"                "Flink"
+                entityRegistry   = component "Entity Registry"      "Redis cache for sub-ms entity lookup + ClickHouse for history"           "Redis, ClickHouse"
+                driftDetector    = component "Topology Drift Detector" "Compares runtime topology vs. declared architecture"                    "Python"
+                blastRadiusCalc  = component "Blast Radius Calculator" "Computes all entities impacted by a problem with confidence %"         "Python"
+
+                topologyProcessor -> graphDatabase   "Graph mutations"
+                graphDatabase     -> entityRegistry  "Entity lookups"
+                driftDetector     -> graphDatabase   "Drift alerts"
+            }
+
+            // ========================================================
+            // LAYER 6: NEUROENGINE (Hypermodal AI)
+            // ========================================================
+
+            neuroEngine = container "NeuroEngine" "Hypermodal AI with 4 operating modes" "PyTorch, Prophet, vLLM, Scikit-Learn" {
+                tags "AILayer"
+
+                causalDetection  = component "Causal Detection Engine"  "Deterministic: baseline → anomaly → graph traversal → root cause"       "PyTorch Geometric, statsmodels"
+                predictiveEngine = component "Predictive Engine"        "ML forecasting: disk, memory, CPU exhaustion predictions"               "Prophet, LSTM"
+                generativeAI     = component "Generative AI Layer"      "BYOM: incident summary, runbook, executive report, post-mortem"         "vLLM, Qwen, Llama"
+                diffEngine       = component "DiffEngine"               "Cross-signal differential analysis (BubbleUp extended)"                 "Python"
+                groundingGuard   = component "Grounding Guardrail"      "Ensures every LLM output is evidence-backed, never hallucinated"        "Python"
+
+                causalDetection  -> predictiveEngine  "Enriched anomaly signals"
+                predictiveEngine -> causalDetection   "Forecast-based signals"
+                causalDetection  -> generativeAI      "Root cause object for report generation"
+                generativeAI     -> groundingGuard    "Raw LLM output for validation"
+            }
+
+            // ========================================================
+            // LAYER 7: AUTOHEAL (Autonomous Remediation)
+            // ========================================================
+
+            autoHeal = container "AutoHeal" "Autonomous remediation with 5 autonomy tiers" "OPA, Python, Go" {
+                tags "RemediationLayer"
+
+                policyEngine     = component "OPA Policy Engine"        "Evaluates Rego policies: IF P1 AND confidence > 95 THEN auto-remediate"  "Open Policy Agent"
+                approvalWorkflow = component "Approval Workflow Engine"  "Routes medium-confidence incidents to engineers for sign-off"             "Python, FastAPI"
+                actionLibrary    = component "Action Library"           "Predefined actions: restart pod, rollback, scale, rotate"                "Go"
+                remediationEngine = component "Auto Remediation Engine"  "Executes actions against K8s API and cloud control planes"                "Go"
+                configDriftEngine = component "Configuration Drift Engine" "Detects and remediates drift via ArgoCD, Ansible, Terraform"           "Go, Python"
+
+                policyEngine     -> approvalWorkflow  "Low-confidence incidents"
+                policyEngine     -> actionLibrary     "High-confidence actions"
+                approvalWorkflow -> remediationEngine "Approved actions"
+                actionLibrary    -> remediationEngine "Action parameters"
+                remediationEngine -> configDriftEngine "Drift-triggered remediation"
+            }
+
+            // ========================================================
+            // LAYER 8: SIMULAX (Digital Twin & Simulation)
+            // ========================================================
+
+            simulaX = container "SimulaX" "Digital twin and what-if simulation engine" "SimPy, Redis, ClickHouse" {
+                tags "SimulationLayer"
+
+                digitalTwin      = component "Digital Twin"          "Continuously updated model of production environment"                    "Redis, SimPy"
+                remediationSim   = component "Remediation Simulation" "Simulates proposed fixes before execution"                              "SimPy"
+                capacitySim      = component "Capacity Simulation"    "Simulates traffic growth and resource exhaustion"                       "SimPy"
+                deploymentSim    = component "Deployment Simulation"  "Simulates deployment rollout impact (canary/blue-green)"                "SimPy"
+                chaosSim         = component "Chaos Simulation"       "Simulates failure injection and cascade propagation"                    "SimPy"
+                bayesianCalib    = component "Bayesian Calibration"   "Auto-tunes model parameters against observed reality"                   "Optuna"
+
+                digitalTwin    -> remediationSim  "Current state model"
+                digitalTwin    -> capacitySim     "Resource model"
+                digitalTwin    -> deploymentSim   "Topology model"
+                digitalTwin    -> chaosSim        "Failure model"
+                bayesianCalib  -> digitalTwin     "Calibration updates"
+            }
+
+            // ========================================================
+            // LAYER 9: SENTINELPLANE (Security Observability)
+            // ========================================================
+
+            sentinelPlane = container "SentinelPlane" "Unified security observability layer" "eBPF, Python" {
+                tags "SecurityLayer"
+
+                runtimeSecurity = component "Runtime Security Detection"  "eBPF LSM hooks: privilege escalation, container escape, RCE, C2"       "eBPF"
+                vulnManagement  = component "Vulnerability Management"   "SBOM auto-gen, CVE correlation, reachability analysis"                  "Grype, Syft"
+                cspm            = component "Cloud Security Posture"      "S3 public access, IAM over-permissive, CIS/NIST/SOC2 compliance"       "Checkov"
+                perfSecCorrel   = component "Performance-Security Correlation" "DDoS, cryptojacking, exfiltration, credential stuffing detection"  "Python"
+
+                runtimeSecurity -> vulnManagement  "Security events"
+                vulnManagement  -> cspm            "Compliance data"
+            }
+
+            // ========================================================
+            // LAYER 10: CONTINUOUS LEARNING
+            // ========================================================
+
+            learningLayer = container "Incident Knowledge Base & Continuous Learning" "Stores outcomes, feeds feedback loop, mines patterns" "Python, ClickHouse, MinIO" {
+                tags "LearningLayer"
+
+                knowledgeBase   = component "Incident Knowledge Base"  "Root causes, playbooks, resolution timelines"                            "ClickHouse, MinIO"
+                feedbackLoop    = component "Feedback Loop Processor"  "Evaluates remediation outcomes, writes learning records"                 "Python"
+                recommendEngine = component "Recommendation Engine"    "Surfaces historically successful actions for new incidents"              "Scikit-Learn"
+                patternMiner    = component "Pattern Mining Engine"    "Mines recurring patterns to improve detection thresholds"               "PyTorch"
+
+                feedbackLoop    -> knowledgeBase   "Incident outcome"
+                knowledgeBase   -> recommendEngine "Historical data"
+                knowledgeBase   -> patternMiner    "Incident corpus"
+                patternMiner    -> knowledgeBase   "Discovered patterns"
+            }
+
+            // ========================================================
+            // LAYER 11: NEXUSUX (Role-Adaptive Experience)
+            // ========================================================
+
+            nexusUX = container "NexusUX" "Unified web UI with 5 role-adaptive modes" "React, TypeScript, FastAPI" {
+                tags "DashboardLayer"
+
+                aiFirstUI    = component "AI-First Chat"        "Natural language queries → NQL + English answers"                       "React"
+                sreUI        = component "SRE Mode"             "Active problems, evidence chain, topology, AutoHeal queue"              "React"
+                developerUI  = component "Developer Mode"       "Service view, trace waterfall, flame graphs, git blame"                "React"
+                executiveUI  = component "Executive Dashboard"  "SLO compliance, revenue at risk, cost trends, MTTR"                    "React"
+                securityUI   = component "Security Mode"        "Runtime security events, CVE matrix, CSPM score"                       "React"
+                incidentExp  = component "Incident Explorer"    "Drill-down incident timeline with root cause path"                     "React"
+                topologyView = component "Topology Viewer"      "Interactive 8-layer dependency graph"                                  "React, Sigma.js"
+                kbExplorer   = component "Knowledge Base Explorer" "Searchable historical incidents and runbooks"                        "React"
+                apiGateway   = component "API Gateway"          "FastAPI gateway aggregating backend services"                          "FastAPI"
+
+                aiFirstUI    -> apiGateway "NL queries"
+                sreUI        -> apiGateway "Incident data"
+                developerUI  -> apiGateway "Trace data"
+                executiveUI  -> apiGateway "Business KPIs"
+                securityUI   -> apiGateway "Security events"
+                incidentExp  -> apiGateway "Incident details"
+                topologyView -> apiGateway "Graph data"
+                kbExplorer   -> apiGateway "Knowledge base"
+            }
+
+            // ========================================================
+            // INTER-LAYER DATA FLOWS
+            // ========================================================
+
+            // Layer 2: GhostCollector → Layer 3: StreamForge
+            ghostCollector.edgeProcessor -> streamForge.receiptValidation "Streams raw telemetry events"
+
+            // Layer 3: StreamForge → Layer 4: NexusStore
+            streamForge.topologyPublisher -> nexusStore.warmStore   "Writes normalized metrics, logs, traces"
+            streamForge.topologyPublisher -> nexusStore.graphStore  "Writes normalized entity relationships"
+
+            // Layer 3: StreamForge → Layer 5: TopoBrain
+            streamForge.topologyPublisher -> topoBrain.topologyProcessor "Publishes topology deltas"
+
+            // Layer 4: NexusStore → Layer 6: NeuroEngine
+            nexusStore.warmStore  -> neuroEngine.causalDetection  "Supplies time-series metrics and log events"
+            nexusStore.warmStore  -> neuroEngine.predictiveEngine "Supplies historical baselines for forecasting"
+            nexusStore.graphStore -> neuroEngine.causalDetection  "Provides live dependency graph"
+
+            // Layer 4: NexusStore → Layer 8: SimulaX
+            nexusStore.warmStore  -> simulaX.digitalTwin  "Supplies real-time metrics"
+            nexusStore.graphStore -> simulaX.digitalTwin  "Supplies live topology"
+
+            // Layer 6: NeuroEngine → Layer 7: AutoHeal
+            neuroEngine.causalDetection -> autoHeal.policyEngine "Sends Root Cause Object with confidence score"
+
+            // Layer 6: NeuroEngine → Layer 8: SimulaX
+            neuroEngine.causalDetection -> simulaX.remediationSim "Proposed remediation for simulation"
+
+            // Layer 8: SimulaX → Layer 7: AutoHeal
+            simulaX.remediationSim -> autoHeal.remediationEngine "Simulated outcome + recommendation"
+
+            // Layer 7: AutoHeal → External Remediation
+            autoHeal.remediationEngine -> kubernetes "Executes kubectl: restart pod, rollback, scale"
+            autoHeal.remediationEngine -> aws        "Calls AWS APIs to restart RDS and modify ASG"
+            autoHeal.remediationEngine -> azure      "Calls Azure APIs to restart VM and scale AKS"
+            autoHeal.remediationEngine -> gcp        "Calls GCP APIs to restart instance and resize GKE"
+
+            // Layer 7: AutoHeal → Config Drift → External Tools
+            autoHeal.configDriftEngine -> argocd    "K8s drift: self-heal sync"
+            autoHeal.configDriftEngine -> ansible   "OS drift: EDA playbook"
+            autoHeal.configDriftEngine -> terraform "Cloud drift: state reconciliation"
+
+            // Layer 7: AutoHeal → Layer 10: Learning
+            autoHeal.remediationEngine -> learningLayer.feedbackLoop "Sends resolution result and success flag"
+
+            // Layer 10: Learning → Layer 3: StreamForge (feedback)
+            learningLayer.patternMiner -> streamForge.adaptiveIntel "Updates detection thresholds with mined patterns"
+
+            // Layer 10: Learning → Layer 7: AutoHeal (recommendations)
+            learningLayer.recommendEngine -> autoHeal.actionLibrary "Injects historically successful actions"
+
+            // Layer 7: AutoHeal → Layer 6: GenAI
+            autoHeal.remediationEngine -> neuroEngine.generativeAI "Remediation outcome and incident context"
+
+            // Layer 6: GenAI → Layer 11: NexusUX
+            neuroEngine.generativeAI -> nexusUX.apiGateway "Delivers incident summaries and reports"
+            autoHeal.approvalWorkflow -> nexusUX.apiGateway "Pushes pending approval requests"
+            autoHeal.remediationEngine -> nexusUX.apiGateway "Streams remediation execution status"
+            neuroEngine.causalDetection -> nexusUX.apiGateway "Pushes root cause path for Incident Explorer"
+            nexusStore.graphStore -> nexusUX.apiGateway "Serves graph topology for Topology Viewer"
+            learningLayer.knowledgeBase -> nexusUX.apiGateway "Serves historical incident data"
+
+            // Layer 9: SentinelPlane Integration
+            ghostCollector.ebpfProbes -> sentinelPlane.runtimeSecurity "Security events from eBPF LSM hooks"
+            sentinelPlane.perfSecCorrel -> neuroEngine.causalDetection "Security-correlated anomalies"
+        }
+
+        // ============================================================
+        // EXTERNAL SYSTEM CONNECTIONS
+        // ============================================================
+
+        // Layer 1: Data Sources → Layer 2: GhostCollector
+        aws        -> omniwatch.ghostCollector.cloudApiPoll   "Sends CloudWatch metrics, logs, Cost Explorer data"
+        aws        -> omniwatch.ghostCollector.otelReceiver   "Exposes Prometheus-compatible endpoints"
+        azure      -> omniwatch.ghostCollector.cloudApiPoll   "Sends Azure Monitor metrics and Cost Management data"
+        azure      -> omniwatch.ghostCollector.otelReceiver   "Forwards Azure Monitor logs"
+        gcp        -> omniwatch.ghostCollector.cloudApiPoll   "Sends Cloud Monitoring metrics and Billing data"
+        gcp        -> omniwatch.ghostCollector.otelReceiver   "Forwards Cloud Logging logs"
+        kubernetes -> omniwatch.ghostCollector.cloudApiPoll   "Exposes kube-state-metrics and cAdvisor"
+        kubernetes -> omniwatch.ghostCollector.ebpfProbes     "eBPF hooks into container runtime"
+        kubernetes -> omniwatch.ghostCollector.otelReceiver   "Sends distributed trace spans"
+        appSources -> omniwatch.ghostCollector.otelReceiver   "Sends application traces and logs via OTel SDK"
+        secSources -> omniwatch.ghostCollector.otelReceiver   "Publishes SIEM events and firewall logs"
+        llmSources -> omniwatch.ghostCollector.llmObserver    "LLM API call telemetry"
+
+        // User Interactions → Layer 11: NexusUX
+        opsEngineer     -> omniwatch.nexusUX.sreUI        "Monitors live incidents and triggers remediations"
+        opsEngineer     -> omniwatch.nexusUX.apiGateway   "Approves or rejects pending remediation actions"
+        executive       -> omniwatch.nexusUX.executiveUI   "Reviews business health KPIs and impact reports"
+        securityAnalyst -> omniwatch.nexusUX.securityUI    "Investigates security-related incidents"
+        developer       -> omniwatch.nexusUX.developerUI   "Investigates code-level issues and traces"
+    }
+
+    // ============================================================
+    // VIEWS
+    // ============================================================
+
+    views {
+
+        systemContext omniwatch "SystemContext" "OmniWatch in context of external cloud environments and users" {
+            include *
+            autoLayout tb
+        }
+
+        container omniwatch "ContainerView" "All processing layers of OmniWatch and their primary data flows" {
+            include *
+            autoLayout tb
+        }
+
+        component omniwatch.ghostCollector "GhostCollectorComponents" "Internal components of the GhostCollector (Layer 2)" {
+            include *
+            autoLayout tb
+        }
+
+        component omniwatch.streamForge "StreamForgeComponents" "Internal components of StreamForge (Layer 3)" {
+            include *
+            autoLayout tb
+        }
+
+        component omniwatch.nexusStore "NexusStoreComponents" "Internal components of NexusStore (Layer 4)" {
+            include *
+            autoLayout tb
+        }
+
+        component omniwatch.topoBrain "TopoBrainComponents" "Internal components of TopoBrain (Layer 5)" {
+            include *
+            autoLayout tb
+        }
+
+        component omniwatch.neuroEngine "NeuroEngineComponents" "Internal components of NeuroEngine (Layer 6)" {
+            include *
+            autoLayout tb
+        }
+
+        component omniwatch.autoHeal "AutoHealComponents" "Internal components of AutoHeal (Layer 7)" {
+            include *
+            autoLayout tb
+        }
+
+        component omniwatch.simulaX "SimulaXComponents" "Internal components of SimulaX (Layer 8)" {
+            include *
+            autoLayout tb
+        }
+
+        component omniwatch.sentinelPlane "SentinelPlaneComponents" "Internal components of SentinelPlane (Layer 9)" {
+            include *
+            autoLayout tb
+        }
+
+        component omniwatch.learningLayer "LearningComponents" "Internal components of Continuous Learning (Layer 10)" {
+            include *
+            autoLayout tb
+        }
+
+        component omniwatch.nexusUX "NexusUXComponents" "Internal components of NexusUX (Layer 11)" {
+            include *
+            autoLayout tb
+        }
+
+        // ============================================================
+        // STYLES
+        // ============================================================
+
+        styles {
+
+            element "Element" {
+                color       #ffffff
+                background  #1a1a2e
+                stroke      #7f5af0
+                strokeWidth 4
+                shape       roundedbox
+            }
+
+            element "Person" {
+                background  #7f5af0
+                color       #ffffff
+                stroke      #5a3fbf
+                strokeWidth 4
+                shape       person
+            }
+
+            element "Software System" {
+                background  #2d2d44
+                color       #a0a0c0
+                stroke      #555580
+                strokeWidth 3
+            }
+
+            element "CollectionLayer" {
+                background  #0a2a2a
+                stroke      #00e5ff
+                strokeWidth 5
+                color       #e0f7fa
+            }
+
+            element "IngestionLayer" {
+                background  #0d3b4f
+                stroke      #00bcd4
+                strokeWidth 5
+                color       #e0f7fa
+            }
+
+            element "StorageLayer" {
+                background  #2e1a4a
+                stroke      #9c27b0
+                strokeWidth 5
+                color       #f3e5f5
+            }
+
+            element "TopologyLayer" {
+                background  #1a3a2a
+                stroke      #4caf50
+                strokeWidth 5
+                color       #e8f5e9
+            }
+
+            element "AILayer" {
+                background  #1a2a4a
+                stroke      #2196f3
+                strokeWidth 5
+                color       #e3f2fd
+            }
+
+            element "RemediationLayer" {
+                background  #4a3a1a
+                stroke      #ff9800
+                strokeWidth 5
+                color       #fff3e0
+            }
+
+            element "SimulationLayer" {
+                background  #2a1a3a
+                stroke      #e040fb
+                strokeWidth 5
+                color       #f3e5f5
+            }
+
+            element "SecurityLayer" {
+                background  #3a1a1a
+                stroke      #f44336
+                strokeWidth 5
+                color       #ffebee
+            }
+
+            element "DashboardLayer" {
+                background  #1a1a3a
+                stroke      #3f51b5
+                strokeWidth 5
+                color       #e8eaf6
+            }
+
+            element "LearningLayer" {
+                background  #3a2a1a
+                stroke      #ff6f00
+                strokeWidth 5
+                color       #fff8e1
+            }
+
+            element "Container" {
+                background  #1a1a2e
+                stroke      #7f5af0
+                strokeWidth 3
+                shape       roundedbox
+            }
+
+            element "Component" {
+                background  #16213e
+                stroke      #a78bfa
+                strokeWidth 2
+                shape       roundedbox
+            }
+
+            relationship "Relationship" {
+                thickness 3
+                color     #7f5af0
+                style     solid
+            }
+        }
+    }
+
+    configuration {
+        scope softwaresystem
+    }
+}
