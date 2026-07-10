@@ -142,15 +142,27 @@ class RootCauseBuilder:
         return rc
 
     def _entity_type_to_layer(self, entity_type: str) -> int:
-        """Map entity type to OmniWatch layer number."""
+        """Map entity type to OmniWatch 8-layer topology number.
+
+        Layer mapping (from AGENTS.md):
+            1: Cost + Carbon (CostCenter)
+            2: Infrastructure
+            3: Hosts
+            4: Processes / Database
+            5: Services
+            6: Applications
+            7: GenAI / LLM Services
+            8: Business Transactions
+        """
         mapping = {
+            "CostCenter": 1,
+            "Infrastructure": 2,
+            "Host": 3,
+            "Process": 4,
             "Database": 4,
-            "Service": 3,
-            "Host": 4,
-            "Infrastructure": 4,
-            "Process": 3,
-            "GenAIService": 6,
-            "BusinessTransaction": 6,
+            "Service": 5,
+            "GenAIService": 7,
+            "BusinessTransaction": 8,
         }
         return mapping.get(entity_type, 0)
 
