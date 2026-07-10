@@ -86,16 +86,27 @@ class ProblemAssembler:
         hash_val = hashlib.sha256(hash_input.encode()).hexdigest()[:12]
         return f"INC-{hash_val.upper()}"
 
+    # Map internal severity to P1-P4 format per AGENTS.md data contract
+    SEVERITY_MAP = {
+        "CRITICAL": "P1",
+        "HIGH": "P2",
+        "MEDIUM": "P3",
+        "LOW": "P4",
+    }
+
     def _calculate_severity(self, anomalies: List[dict]) -> str:
-        """Determine incident severity from constituent anomalies."""
+        """Determine incident severity from constituent anomalies.
+
+        Returns P1-P4 format per AGENTS.md IncidentRecord schema.
+        """
         severities = [a.get("severity", "INFO") for a in anomalies]
         if "CRITICAL" in severities:
-            return "CRITICAL"
+            return "P1"
         elif "HIGH" in severities:
-            return "HIGH"
+            return "P2"
         elif "MEDIUM" in severities:
-            return "MEDIUM"
-        return "LOW"
+            return "P3"
+        return "P4"
 
     def _calculate_business_impact_score(self, anomalies: List[dict]) -> int:
         """Calculate business impact score (0-100) from anomaly scores."""
@@ -109,9 +120,9 @@ class ProblemAssembler:
 
     def _calculate_sla_breach_risk(self, severity: str, business_impact_score: int) -> str:
         """Determine SLA breach risk level."""
-        if severity == "CRITICAL" or business_impact_score >= 90:
+        if severity == "P1" or business_impact_score >= 90:
             return "HIGH"
-        elif severity == "HIGH" or business_impact_score >= 70:
+        elif severity == "P2" or business_impact_score >= 70:
             return "MEDIUM"
         return "LOW"
 
@@ -128,7 +139,7 @@ class ProblemAssembler:
             "severity": severity,
             "business_impact_score": business_impact_score,
             "root_cause": "",
-            "related_anomaly_ids": [a.get("anomaly_id", f"ANM-{hashlib.sha256(a.get('entity_id', '').encode()).hexdigest()[:8].upper()}") for a in anomalies],
+            "related_anomalies": [a.get("anomaly_id", f"ANM-{hashlib.sha256(a.get('entity_id', '').encode()).hexdigest()[:8].upper()}") for a in anomalies],
             "deduplicated_count": len(anomalies),
             "sla_breach_risk": sla_breach_risk,
             "assigned_to": "auto-remediation",

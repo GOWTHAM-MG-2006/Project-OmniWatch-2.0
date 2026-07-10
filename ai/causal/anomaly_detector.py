@@ -419,6 +419,10 @@ class AnomalyDetector:
                     "deviation_from_baseline": deviation_str,
                     "timestamp": now,
                     "status": "open",
+                    "topology_context": {
+                        "depends_on": [],
+                        "depended_by": [],
+                    },
                 }
                 results.append(signal)
 

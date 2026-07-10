@@ -54,6 +54,28 @@ class TopoBrainGraph:
             "last_seen": datetime.utcnow().isoformat(),
         })
 
+    def add_application(
+        self,
+        app_id: str,
+        name: str,
+        app_type: str = "web",
+        platform: str = "react",
+        version: str = "1.0.0",
+        status: str = "active",
+        anomaly_score: float = 0.0,
+    ) -> bool:
+        """Add an Application node (Layer 6: Web, mobile, SPAs, CLIs)."""
+        return self.store.create_node("Application", {
+            "id": app_id,
+            "name": name,
+            "type": app_type,
+            "platform": platform,
+            "version": version,
+            "status": status,
+            "anomaly_score": str(anomaly_score),
+            "last_seen": datetime.utcnow().isoformat(),
+        })
+
     def add_host(
         self,
         host_id: str,

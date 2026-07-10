@@ -161,6 +161,7 @@ class RootCauseBuilder:
             "Process": 4,
             "Database": 4,
             "Service": 5,
+            "Application": 6,
             "GenAIService": 7,
             "BusinessTransaction": 8,
         }

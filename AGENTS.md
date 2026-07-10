@@ -661,8 +661,8 @@ docker-compose up -d
 
 |Service|URL|Credentials|
 |-|-|-|
-|Neo4j Browser|http://localhost:7474|neo4j / omniwatch|
-|MinIO Console|http://localhost:9001|minioadmin / minioadmin|
+|Kuzu Explorer|(embedded, no browser UI)|N/A|
+|MinIO Console|http://localhost:9002|minioadmin / minioadmin|
 |ClickHouse|localhost:9000|default / (no password)|
 |Kafka|localhost:9092|none|
 |OPA|http://localhost:8181|none|

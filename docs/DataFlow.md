@@ -63,20 +63,20 @@
 │    └─→ Parquet archive (cold)                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
                                      │
-                    ┌────────────────┼─────────────────┐
-                    ▼                ▼                 ▼
-┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-│  LAYER 4:        │ │  LAYER 5:        │ │  LAYER 8:        │
-│  NEXUSSTORE      │ │  TOPOBRAIN       │ │  SIMULAX         │
-│  (Storage)       │ │  (Topology)      │ │  (Digital Twin)  │
-│                  │ │                  │ │                  │
-│  Hot: Arrow      │ │  8-Layer CKG     │ │  Continuously    │
-│  Warm: ClickHouse│ │  <500ms updates  │ │  updated model   │
-│  Cold: Parquet   │ │  Entity graph    │ │  of production   │
-│  Graph: Kuzu     │ │                  │ │                  │
-└────────┬─────────┘ └────────┬─────────┘ └────────┬─────────┘
-         │                    │                    │
-         └────────────────────┼────────────────────┘
+                    ┌────────────────┴─────────────────┐
+                    ▼                                  ▼
+┌──────────────────┐ ┌──────────────────┐
+│  LAYER 4:        │ │  LAYER 5:        │
+│  NEXUSSTORE      │ │  TOPOBRAIN       │
+│  (Storage)       │ │  (Topology)      │
+│                  │ │                  │
+│  Hot: Arrow      │ │  8-Layer CKG     │
+│  Warm: ClickHouse│ │  <500ms updates  │
+│  Cold: Parquet   │ │  Entity graph    │
+│  Graph: Kuzu     │ │                  │
+└────────┬─────────┘ └────────┬─────────┘
+         │                    │
+         └────────────────────┘
                               ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  LAYER 6: NEUROENGINE (Hypermodal AI)                                      │
@@ -141,17 +141,17 @@
 │  Output: Remediation Executed + Rollback Plan + Audit Log                  │
 └────────────────────────────────────┬────────────────────────────────────────┘
                                      │
-                    ┌────────────────┼─────────────────┐
-                    ▼                ▼                 ▼
-┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-│  LAYER 9:        │ │  LAYER 8:        │ │  LAYER 10:       │
-│  SENTINELPLANE   │ │  SIMULAX         │ │  CONTINUOUS      │
-│  (Security)      │ │  (Validation)    │ │  LEARNING        │
-│                  │ │                  │ │                  │
-│  Runtime security│ │  Shadow sim      │ │  Feedback Loop   │
-│  CVE reachability│ │  before execute  │ │  Pattern Mining  │
-│  CSPM compliance │ │                  │ │  Recommendations │
-└──────────────────┘ └──────────────────┘ └────────┬─────────┘
+                    ┌────────────────┴─────────────────┐
+                    ▼                                  ▼
+┌──────────────────┐ ┌──────────────────┐
+│  LAYER 8:        │ │  LAYER 9:        │
+│  SIMULAX         │ │  SENTINELPLANE   │
+│  (Digital Twin)  │ │  (Security)      │
+│                  │ │                  │
+│  Shadow sim      │ │  Runtime security│
+│  before execute  │ │  CVE reachability│
+│                  │ │  CSPM compliance │
+└──────────────────┘ └────────┬─────────┘
                                                     │
                                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -216,7 +216,7 @@ Kafka → Flink (normalize + enrich + correlate)
   → Entity Resolution (stabilize IDs)
   → Windowing (align + aggregate + feature engineering)
   → ClickHouse (warm storage)
-  → Neo4j/Kuzu (graph storage)
+  → Kuzu (graph storage)
   → MinIO/S3 (cold archive)
   → TopoBrain (topology deltas)
 ```
@@ -391,7 +391,7 @@ Layer 2:  GhostCollector (eBPF Collection)
   ↓
 Layer 3:  StreamForge (Entity Resolution + Windowing)
   ↓
-Layer 4:  NexusStore (ClickHouse + Neo4j + MinIO)
+Layer 4:  NexusStore (ClickHouse + Kuzu + MinIO)
   ↓
 Layer 5:  TopoBrain (8-Layer Graph)
   ↓

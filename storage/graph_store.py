@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 # Node type definitions from AGENTS.md
 NODE_TYPES = {
     "Service": ["id", "name", "type", "criticality", "cloud_provider", "status", "anomaly_score", "last_seen"],
+    "Application": ["id", "name", "type", "platform", "version", "status", "anomaly_score", "last_seen"],
     "Process": ["id", "name", "type", "container_id", "pod_id", "host_id", "anomaly_score"],
     "Host": ["id", "name", "type", "cloud_provider", "region", "cpu", "memory", "anomaly_score"],
     "Infrastructure": ["id", "name", "type", "cloud_provider", "status", "anomaly_score"],
@@ -98,7 +99,8 @@ class GraphStore:
             # Create generic FROM/TO relationship (specific source/target set at query time)
             query = f"""CREATE REL TABLE IF NOT EXISTS {rel_type}
                 (FROM Service TO Service, FROM Service TO Process, FROM Service TO Host,
-                 FROM Service TO Database, FROM Service TO GenAIService,
+                 FROM Service TO Database, FROM Service TO GenAIService, FROM Service TO Application,
+                 FROM Application TO Service, FROM Application TO GenAIService,
                  FROM Process TO Host, FROM Host TO Infrastructure,
                  FROM Database TO Host, FROM GenAIService TO Service,
                  FROM BusinessTransaction TO Service, FROM CostCenter TO Host,

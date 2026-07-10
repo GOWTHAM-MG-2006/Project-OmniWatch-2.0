@@ -84,7 +84,7 @@
               │  LAYER 4:      │  │  LAYER 5:      │
               │  NEXUSSTORE    │  │  TOPOBRAIN     │
               │  ClickHouse    │  │  8-Layer Graph  │
-              │  Neo4j/Kuzu    │  │  <500ms update  │
+              │  Kuzu           │  │  <500ms update  │
               │  MinIO/Parquet │  │                │
               └───────┬────────┘  └───────┬────────┘
                       │                   │
