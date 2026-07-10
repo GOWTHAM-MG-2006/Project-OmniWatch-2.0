@@ -1,25 +1,33 @@
-# Simulation Engine (Layer 8: SimulaX)
+# SimulaX — Layer 8: Digital Twin & Simulation
 
-## Digital Twin & What-If Simulation
+**Phase:** 3
+**Technology:** SimPy, Redis, Optuna
 
-Continuously updated production model for safe change validation:
+## Components
 
-- **digital_twin.py** — Continuously updated production model
-- **remediation_sim.py** — Simulates proposed fixes (SimPy)
-- **capacity_sim.py** — Simulates traffic growth
-- **deployment_sim.py** — Simulates deployment rollout
-- **chaos_sim.py** — Simulates failure injection
-- **bayesian_calibration.py** — Auto-tunes model parameters (Optuna)
+| File | Component | Purpose |
+|------|-----------|---------|
+| `digital_twin.py` | Digital Twin | Continuously updated model of production environment |
+| `remediation_sim.py` | Remediation Simulator | Simulates proposed fixes before execution |
+| `capacity_sim.py` | Capacity Simulator | Simulates traffic growth and resource exhaustion |
+| `deployment_sim.py` | Deployment Simulator | Simulates deployment rollout impact |
+| `chaos_sim.py` | Chaos Simulator | Simulates failure injection and cascade propagation |
+| `bayesian_calibration.py` | Bayesian Calibration | Auto-tunes simulation parameters against reality |
 
-## Simulation Modes
+## Data Flow
 
-1. **Remediation Simulation** — Validate fixes before applying
-2. **Capacity Simulation** — Predict traffic growth impact
-3. **Deployment Simulation** — Safe rollout validation
-4. **Chaos Simulation** — Failure injection testing
+```
+NexusStore (metrics) + TopoBrain (topology) + NeuroEngine (models)
+  → Digital Twin (Redis state)
+    → RemediationSim (SimPy) → SimulaXResult → AutoHeal
+    → CapacitySim (SimPy) → Capacity Report
+    → DeploymentSim (SimPy) → Risk Score → Block/Warn/Approve
+    → ChaosSim (SimPy) → Blast Radius + Resilience Gaps
+    → BayesianCalibration (Optuna) → Calibrated Parameters → Redis
+```
 
-## Technology
+## Dependencies
 
+- Redis (state storage)
 - SimPy (discrete event simulation)
-- Redis (simulation state)
-- Optuna (Bayesian hyperparameter calibration)
+- Optuna (Bayesian optimization — optional, graceful fallback)

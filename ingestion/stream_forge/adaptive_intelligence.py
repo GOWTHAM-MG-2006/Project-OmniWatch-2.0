@@ -173,3 +173,22 @@ class CausalSampler:
         self._ring_buffer.clear()
         self._error_buffer.clear()
         return kept
+
+    # -- Learning feedback ----------------------------------------------------
+
+    def apply_learning_feedback(self, patterns: list[dict[str, Any]]) -> None:
+        """Apply pattern mining feedback to improve sampling thresholds.
+
+        Args:
+            patterns: List of patterns from pattern_miner.mine_patterns().
+        """
+        for pattern in patterns:
+            pattern_type = pattern.get("pattern_type", "")
+            if pattern_type == "severity_distribution":
+                severity = pattern.get("severity", "")
+                occurrences = pattern.get("occurrences", 0)
+                if severity in SAMPLING_RATES and occurrences > 10:
+                    current_rate = SAMPLING_RATES[severity]
+                    new_rate = min(1.0, current_rate * 1.1)
+                    SAMPLING_RATES[severity] = new_rate
+                    logger.info("Learning feedback: increased %s sampling rate to %.0f%%", severity, new_rate * 100)

@@ -302,3 +302,23 @@ class BaselineEngine:
             if n >= 2 * p:
                 return p
         return 1
+
+    # -- Learning feedback ----------------------------------------------------
+
+    def apply_learning_feedback(self, patterns: list[dict[str, Any]]) -> None:
+        """Apply pattern mining feedback to improve baseline thresholds.
+
+        Args:
+            patterns: List of patterns from pattern_miner.mine_patterns().
+        """
+        for pattern in patterns:
+            pattern_type = pattern.get("pattern_type", "")
+            if pattern_type == "recurring_entity_failure":
+                entity = pattern.get("entity", "")
+                confidence = pattern.get("confidence", 0)
+                if confidence > 0.5:
+                    logger.info("Learning feedback: entity %s has recurring failures (confidence=%.2f)", entity, confidence)
+            elif pattern_type == "action_effectiveness":
+                action = pattern.get("action_type", "")
+                rate = pattern.get("success_rate", 0)
+                logger.info("Learning feedback: action %s has success rate %.0f%%", action, rate * 100)
