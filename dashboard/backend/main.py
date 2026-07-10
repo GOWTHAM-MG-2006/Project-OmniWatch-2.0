@@ -22,6 +22,7 @@ from dashboard.backend.routes import (
     knowledge, simulations, security, config_drift, reports,
 )
 from dashboard.backend.websocket import ConnectionManager
+from auth.middleware import require_auth  # noqa: F401 — exported for route modules
 
 # Configure structured JSON logging
 logging.basicConfig(
