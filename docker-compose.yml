@@ -1,0 +1,194 @@
+# OmniWatch 2.0 — Local Infrastructure Stack
+# All services required for Phase 1 development and testing
+
+services:
+  # ─── Zookeeper (Kafka dependency) ───────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    hostname: zookeeper
+    container_name: omniwatch-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Apache Kafka ──────────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    hostname: kafka
+    container_name: omniwatch-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  # ─── ClickHouse (Warm Tier) ───────────────────────────────────────
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3
+    hostname: clickhouse
+    container_name: omniwatch-clickhouse
+    ports:
+      - "9000:9000"   # Native protocol
+      - "8123:8123"   # HTTP interface
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./storage/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    environment:
+      CLICKHOUSE_DB: omniwatch
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── MinIO (Object Storage) ───────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    hostname: minio
+    container_name: omniwatch-minio
+    ports:
+      - "9000:9000"   # API (mapped to 9001 host to avoid ClickHouse conflict)
+      - "9001:9001"   # Console
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis (Cache + Deduplication) ────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    hostname: redis
+    container_name: omniwatch-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Open Policy Agent (Policy Engine) ────────────────────────────
+  opa:
+    image: openpolicyagent/opa:latest
+    hostname: opa
+    container_name: omniwatch-opa
+    ports:
+      - "8181:8181"
+    volumes:
+      - ./remediation/policies:/policies
+    command:
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:8181"
+      - "/policies"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8181/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Ollama (LLM Inference) ──────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    hostname: ollama
+    container_name: omniwatch-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ─── Dashboard Backend (FastAPI) ──────────────────────────────────
+  dashboard-backend:
+    build:
+      context: ./dashboard/backend
+      dockerfile: Dockerfile
+    hostname: dashboard-backend
+    container_name: omniwatch-dashboard-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 9000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KUZU_DATABASE_PATH: /data/omniwatch-graph
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      OPA_ENDPOINT: http://opa:8181
+      OLLAMA_ENDPOINT: http://ollama:11434
+    depends_on:
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Dashboard Frontend (React) ───────────────────────────────────
+  dashboard-frontend:
+    build:
+      context: ./dashboard/frontend
+      dockerfile: Dockerfile
+    hostname: dashboard-frontend
+    container_name: omniwatch-dashboard-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      dashboard-backend:
+        condition: service_healthy
+
+volumes:
+  clickhouse_data:
+  minio_data:
+  redis_data:
+  ollama_data:
