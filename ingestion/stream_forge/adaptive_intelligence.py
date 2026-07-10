@@ -107,3 +107,69 @@ class AdaptiveIntelligence:
         elif anomaly_score >= ANOMALY_THRESHOLDS["low"]:
             return "low"
         return "normal"
+
+
+class CausalSampler:
+    """Tail-based causal sampling with ring buffer.
+
+    Buffers events and keeps 100% of errors/anomalies while sampling normal traffic.
+    Designed for downstream causal analysis where losing error events breaks root cause tracing.
+    """
+
+    def __init__(self, buffer_size: int = 1000, sample_rate: float = 0.1):
+        self.buffer_size = buffer_size
+        self.sample_rate = sample_rate
+        self._ring_buffer: list[dict] = []
+        self._error_buffer: list[dict] = []
+
+    def should_keep(self, event: dict) -> bool:
+        """Determine if event should be kept (100% for errors/anomalies)."""
+        # Always keep if involves 'under-investigation' service
+        entity_id = event.get("entity_id", "")
+        if entity_id == "under-investigation":
+            return True
+
+        # Keep 100%: ERROR or FATAL logs
+        log_level = str(event.get("log_level", "")).upper()
+        if log_level in ("ERROR", "FATAL"):
+            return True
+
+        # Keep 100%: status 4xx or 5xx
+        status_code = event.get("status_code") or event.get("status")
+        if isinstance(status_code, (int, str)):
+            try:
+                code = int(status_code)
+                if code >= 400:
+                    return True
+            except (ValueError, TypeError):
+                pass
+
+        # Keep 100%: anomalous latency
+        duration_ms = event.get("duration_ms", 0)
+        if isinstance(duration_ms, (int, float)) and duration_ms > 1000:
+            return True
+
+        # Keep 100%: high anomaly score
+        anomaly_score = event.get("anomaly_score", 0)
+        if isinstance(anomaly_score, (int, float)) and anomaly_score > 0.7:
+            return True
+
+        # Normal traffic: sample at configured rate
+        return random.random() < self.sample_rate
+
+    def buffer_event(self, event: dict) -> None:
+        """Add event to ring buffer. Evicts oldest when full."""
+        if len(self._ring_buffer) >= self.buffer_size:
+            self._ring_buffer.pop(0)
+        self._ring_buffer.append(event)
+
+        # Also track errors separately for quick access
+        if self.should_keep(event):
+            self._error_buffer.append(event)
+
+    def flush(self) -> list[dict]:
+        """Flush buffer, keeping only events that should be kept."""
+        kept = [e for e in self._ring_buffer if self.should_keep(e)]
+        self._ring_buffer.clear()
+        self._error_buffer.clear()
+        return kept

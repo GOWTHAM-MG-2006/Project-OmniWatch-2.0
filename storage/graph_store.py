@@ -132,6 +132,8 @@ class GraphStore:
         to_id: str,
         rel_type: str,
         properties: dict[str, Any] | None = None,
+        from_type: str = "Service",
+        to_type: str = "Service",
     ) -> bool:
         """Create a relationship between two nodes."""
         if rel_type not in RELATIONSHIP_TYPES:
@@ -149,7 +151,7 @@ class GraphStore:
             prop_str = " {" + ", ".join(prop_parts) + "}"
 
         query = f"""
-        MATCH (a:Service), (b:Service)
+        MATCH (a:{from_type}), (b:{to_type})
         WHERE a.id = '{from_id}' AND b.id = '{to_id}'
         CREATE (a)-[:{rel_type}{prop_str}]->(b)
         """

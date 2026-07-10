@@ -189,6 +189,44 @@ class TopoBrainGraph:
             "carbon_grams_per_hour": str(carbon_grams_per_hour),
         })
 
+    def add_hosted_by(
+        self,
+        from_id: str,
+        to_id: str,
+        cost_center_id: str = "",
+        hourly_cost: float = 0.0,
+    ) -> bool:
+        """Add a HOSTED_BY relationship."""
+        return self.store.create_relationship(
+            from_id, to_id, "HOSTED_BY",
+            properties={
+                "cost_center_id": cost_center_id,
+                "hourly_cost": str(hourly_cost),
+            },
+            from_type="CostCenter",
+            to_type="Host",
+        )
+
+    def add_inferred_by(
+        self,
+        from_id: str,
+        to_id: str,
+        causal_score: float = 0.0,
+        confidence: float = 0.0,
+        method: str = "",
+    ) -> bool:
+        """Add an INFERRED_BY relationship."""
+        return self.store.create_relationship(
+            from_id, to_id, "INFERRED_BY",
+            properties={
+                "causal_score": str(causal_score),
+                "confidence": str(confidence),
+                "method": method,
+            },
+            from_type="Service",
+            to_type="Service",
+        )
+
     def add_relationship(
         self,
         from_id: str,
