@@ -233,3 +233,25 @@ ENGINE = MergeTree()
 PARTITION BY toYYYYMM(timestamp)
 ORDER BY (entity_id, timestamp)
 SETTINGS index_granularity = 8192;
+
+-- ─── Audit Log (Append-Only) ───────────────────────────────────────
+-- Primary query: By event_type + user_id + timestamp
+-- Retention: 7 years (configurable via AUDIT_LOG_RETENTION_YEARS)
+CREATE TABLE IF NOT EXISTS omniwatch.audit_log
+(
+    event_id        String DEFAULT generateUUIDv4(),
+    event_type      LowCardinality(String),
+    user_id         String,
+    resource_type   LowCardinality(String),
+    resource_id     String,
+    action          LowCardinality(String),
+    outcome         LowCardinality(String),
+    metadata        String DEFAULT '{}',
+    ip_address      String DEFAULT '',
+    timestamp       DateTime64(3, 'UTC')
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (event_type, user_id, timestamp)
+TTL timestamp + INTERVAL 7 YEAR
+SETTINGS index_granularity = 8192;
