@@ -3,15 +3,35 @@ OmniWatch 2.0 — Auth (SSO Provider)
 Component: SSOProvider Tests
 Layer: Enterprise
 Phase: 6
-Purpose: Tests for OIDC SSO provider with JWT session management
+Purpose: Tests for OIDC SSO provider with JWT session management (RS256)
 Inputs: Mock Redis, mock JWT tokens
 Outputs: Test assertions for session lifecycle
 """
 
+import os
 import jwt
 import json
 import pytest
 from unittest.mock import MagicMock, patch
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+
+# Generate test keys
+_test_private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+_test_private_pem = _test_private_key.private_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PrivateFormat.PKCS8,
+    encryption_algorithm=serialization.NoEncryption()
+).decode()
+_test_public_pem = _test_private_key.public_key().public_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PublicFormat.SubjectPublicKeyInfo
+).decode()
+
+# Set test environment
+os.environ["JWT_PRIVATE_KEY"] = _test_private_pem
+os.environ["JWT_PUBLIC_KEY"] = _test_public_pem
+os.environ["TESTING"] = "1"
 
 from auth.sso_provider import SSOProvider
 
@@ -29,9 +49,10 @@ def mock_redis():
 
 @pytest.fixture
 def provider(mock_redis):
-    """SSOProvider with mocked Redis."""
+    """SSOProvider with mocked Redis and test keys."""
     p = SSOProvider(
-        jwt_secret="test-secret-key-for-unit-tests",
+        jwt_private_key=_test_private_pem,
+        jwt_public_key=_test_public_pem,
         redis_host="localhost",
         redis_port=6379
     )
@@ -103,8 +124,8 @@ class TestValidateToken:
 
         expired_token = jwt.encode(
             expired_payload,
-            provider.jwt_secret,
-            algorithm="HS256"
+            _test_private_pem,
+            algorithm="RS256"
         )
 
         payload = provider.validate_token(expired_token)

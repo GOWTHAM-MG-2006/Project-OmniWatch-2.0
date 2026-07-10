@@ -121,7 +121,7 @@ class RBACManager:
             role: The role to assign (must be one of the 5 predefined roles).
         """
         self.redis_client.hset(self.REDIS_KEY, user_id, role)
-        logger.info(f"Assigned role '{role}' to user '{user_id}'")
+        logger.info("Assigned role '%s' to user '%s'", role, user_id)
 
     def get_user_role(self, user_id: str) -> Optional[str]:
         """

@@ -8,10 +8,14 @@ Inputs: Mock SSOProvider, mock RBACManager
 Outputs: Test assertions for 401/403 responses
 """
 
+import os
 import pytest
 from unittest.mock import MagicMock, patch
 from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
+
+# Set test environment before importing auth modules
+os.environ["TESTING"] = "1"
 
 from auth.middleware import require_auth
 

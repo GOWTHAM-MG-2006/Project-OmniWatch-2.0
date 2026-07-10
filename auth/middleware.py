@@ -114,18 +114,18 @@ def require_auth(resource: str, action: str):
 
         if not authorized:
             logger.warning(
-                f"User {user_id} denied {resource}:{action} "
-                f"(roles={roles})"
+                "User %s denied %s:%s (roles=%s)",
+                user_id, resource, action, roles
             )
             _log_access_decision(
                 audit, request, user_id=user_id,
                 resource=resource, action=action, outcome="denied",
-                detail=f"Roles {roles} lack {resource}:{action} permission",
+                detail="Roles %s lack %s:%s permission" % (roles, resource, action),
             )
             raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         # Step 4: Success — log and return user context
-        logger.debug(f"User {user_id} authorized for {resource}:{action}")
+        logger.debug("User %s authorized for %s:%s", user_id, resource, action)
         _log_access_decision(
             audit, request, user_id=user_id,
             resource=resource, action=action, outcome="success",
@@ -158,11 +158,11 @@ def _log_access_decision(
             event_type="api_call",
             user_id=user_id,
             resource_type="endpoint",
-            resource_id=f"{request.method} {request.url.path}",
+            resource_id="%s %s" % (request.method, request.url.path),
             action=action,
             outcome=outcome,
             ip_address=client_ip,
             metadata=metadata,
         )
     except Exception as exc:
-        logger.error(f"Failed to write audit log: {exc}")
+        logger.error("Failed to write audit log: %s", str(exc))
