@@ -1,4 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+dist/
+build/
+.cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-specific
 Project-Details/
 .mimocode/
-.vscode
-Agents.md
+data/
+*.log
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
