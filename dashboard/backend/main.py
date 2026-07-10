@@ -20,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dashboard.backend.routes import (
     incidents, topology, metrics, approvals,
     knowledge, simulations, security, config_drift, reports,
+    audit, auth_routes,
 )
 from dashboard.backend.websocket import ConnectionManager
 from auth.middleware import require_auth  # noqa: F401 — exported for route modules
@@ -59,6 +60,8 @@ app.include_router(simulations.router, prefix="/api/v1/simulations", tags=["simu
 app.include_router(security.router, prefix="/api/v1/security", tags=["security"])
 app.include_router(config_drift.router, prefix="/api/v1/config-drift", tags=["config-drift"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
+app.include_router(audit.router, prefix="/api/v1/audit", tags=["audit"])
+app.include_router(auth_routes.router, prefix="/api/v1/auth", tags=["auth"])
 
 
 @app.get("/health")
