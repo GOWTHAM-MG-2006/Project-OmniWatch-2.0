@@ -33,6 +33,7 @@ Thumbs.db
 # Project-specific
 Project-Details/
 .mimocode/
+docs/compose/
 data/
 *.log
 
