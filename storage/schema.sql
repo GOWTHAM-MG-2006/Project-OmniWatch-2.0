@@ -255,3 +255,19 @@ PARTITION BY toYYYYMM(timestamp)
 ORDER BY (event_type, user_id, timestamp)
 TTL timestamp + INTERVAL 7 YEAR
 SETTINGS index_granularity = 8192;
+
+-- ─── Regions (Federation) ──────────────────────────────────────────
+-- Primary query: By region_id
+CREATE TABLE IF NOT EXISTS omniwatch.regions
+(
+    region_id       String,
+    endpoint        String,
+    display_name    String,
+    status          LowCardinality(String) DEFAULT 'healthy',
+    last_health_check DateTime64(3, 'UTC'),
+    created_at      DateTime64(3, 'UTC'),
+    metadata        String DEFAULT '{}'
+)
+ENGINE = MergeTree()
+ORDER BY region_id
+SETTINGS index_granularity = 8192;
