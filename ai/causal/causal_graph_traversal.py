@@ -323,3 +323,163 @@ class CausalGraphTraversal:
                     )
 
         return candidates
+
+
+# ---------------------------------------------------------------------------
+# CausalGNN — Graph Attention Network for root cause identification
+# ---------------------------------------------------------------------------
+
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+
+try:
+    from torch_geometric.nn import GATConv, global_mean_pool
+    from torch_geometric.data import Data
+    HAS_TORCH_GEOMETRIC = True
+except ImportError:
+    HAS_TORCH_GEOMETRIC = False
+
+
+class CausalGNN(nn.Module if HAS_TORCH else object):
+    """Graph Attention Network for causal root cause identification.
+
+    Uses 2-layer GAT to propagate anomaly signals through the dependency
+    graph and identify the entity with highest causal influence.
+    """
+
+    def __init__(self, in_features: int = 4, hidden_features: int = 16, out_features: int = 1):
+        if HAS_TORCH:
+            super().__init__()
+            if HAS_TORCH_GEOMETRIC:
+                self.conv1 = GATConv(in_features, hidden_features, heads=4, concat=False)
+                self.conv2 = GATConv(hidden_features, out_features, heads=1, concat=False)
+            self.in_features = in_features
+            self.out_features = out_features
+
+    def forward(self, x, edge_index):
+        if not HAS_TORCH_GEOMETRIC:
+            return torch.zeros(x.shape[0], 1) if HAS_TORCH else None
+        x = F.relu(self.conv1(x, edge_index))
+        x = self.conv2(x, edge_index)
+        return torch.sigmoid(x)
+
+    def predict_causal_scores(
+        self,
+        adjacency: list[list[int]],
+        anomaly_scores: list[float],
+        entity_ids: list[str],
+    ) -> dict[str, float]:
+        """Predict causal scores using the GNN model.
+
+        Args:
+            adjacency: Adjacency list [entity_index -> list of neighbor indices].
+            anomaly_scores: Anomaly score per entity.
+            entity_ids: Entity ID per entity.
+
+        Returns:
+            Dict mapping entity_id to causal score (0-1).
+        """
+        if not HAS_TORCH or not HAS_TORCH_GEOMETRIC:
+            return {}
+
+        n = len(entity_ids)
+        if n == 0:
+            return {}
+
+        # Build edge index
+        edge_src, edge_dst = [], []
+        for i, neighbors in enumerate(adjacency):
+            for j in neighbors:
+                if j < n:
+                    edge_src.append(i)
+                    edge_dst.append(j)
+
+        if not edge_src:
+            return {eid: 0.0 for eid in entity_ids}
+
+        edge_index = torch.tensor([edge_src, edge_dst], dtype=torch.long)
+        x = torch.tensor([[s, 0.0, 0.0, 0.0] for s in anomaly_scores], dtype=torch.float)
+
+        with torch.no_grad():
+            scores = self.forward(x, edge_index)
+
+        return {
+            entity_ids[i]: round(float(scores[i].item()), 4)
+            for i in range(min(n, scores.shape[0]))
+        }
+
+
+class CausalGNNRunner:
+    """Runner that integrates GNN with existing BFS+Granger approach."""
+
+    def __init__(self):
+        self.model = CausalGNN() if HAS_TORCH else None
+        self._trained = False
+
+    def train(self, adjacency: list, anomaly_scores: list, labels: list, epochs: int = 100) -> float:
+        """Train the GNN model on historical incident data.
+
+        Args:
+            adjacency: Adjacency list for the dependency graph.
+            anomaly_scores: Anomaly scores per entity.
+            labels: Ground truth root cause indices.
+            epochs: Training epochs.
+
+        Returns:
+            Final training loss.
+        """
+        if not HAS_TORCH or not HAS_TORCH_GEOMETRIC or self.model is None:
+            return 0.0
+
+        # Build graph data
+        n = len(anomaly_scores)
+        edge_src, edge_dst = [], []
+        for i, neighbors in enumerate(adjacency):
+            for j in neighbors:
+                if j < n:
+                    edge_src.append(i)
+                    edge_dst.append(j)
+
+        if not edge_src:
+            return 0.0
+
+        edge_index = torch.tensor([edge_src, edge_dst], dtype=torch.long)
+        x = torch.tensor([[s, 0.0, 0.0, 0.0] for s in anomaly_scores], dtype=torch.float)
+        y = torch.zeros(n, 1)
+        for label in labels:
+            if label < n:
+                y[label] = 1.0
+
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
+        loss_fn = nn.BCELoss()
+
+        self.model.train()
+        for epoch in range(epochs):
+            optimizer.zero_grad()
+            pred = self.model(x, edge_index)
+            loss = loss_fn(pred, y)
+            loss.backward()
+            optimizer.step()
+
+        self._trained = True
+        return float(loss.item())
+
+    def predict(
+        self,
+        adjacency: list,
+        anomaly_scores: list,
+        entity_ids: list,
+    ) -> dict[str, float]:
+        """Predict causal scores using trained GNN."""
+        if self.model is None:
+            return {}
+        return self.model.predict_causal_scores(adjacency, anomaly_scores, entity_ids)
+
+    @property
+    def is_trained(self) -> bool:
+        return self._trained and self.model is not None
