@@ -49,12 +49,6 @@ Phase 7 expands OmniWatch with ecosystem breadth and business intelligence:
 - **Monitoring**: Prometheus Export, Grafana Dashboard, Jaeger Export
 - **Security**: Wazuh SIEM, Suricata IDS
 
-### Mobile App
-- React Native + Expo cross-platform app
-- Real-time incident updates via WebSocket
-- Push notifications for alerts
-- One-tap approval/rejection of remediation
-
 ### Pricing Engine
 - Usage-based pricing with 4 tiers (Free, Starter, Pro, Enterprise)
 - Real-time cost tracking and projections
@@ -136,10 +130,6 @@ open http://localhost:3000
 │   ├── library/            #   Cloud, DB, MQ, Web, CI/CD, Monitoring, Security
 │   ├── base.py             #   BaseIntegration abstract class
 │   └── registry.py         #   Integration registry
-├── mobile/                 # React Native mobile app
-│   └── src/
-│       ├── screens/        #   Dashboard, Incident, Topology, Settings
-│       └── services/       #   API client, notifications
 ├── billing/                # Pricing engine
 │   ├── pricing_engine.py   #   Usage-based pricing calculation
 │   └── pricing_dashboard.py #  FastAPI billing API

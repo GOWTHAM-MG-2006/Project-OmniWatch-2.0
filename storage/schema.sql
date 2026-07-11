@@ -142,6 +142,7 @@ CREATE TABLE IF NOT EXISTS omniwatch.pending_approvals
     requested_by    String,
     status          LowCardinality(String) DEFAULT 'pending',
     created_at      DateTime64(3, 'UTC'),
+    updated_at      DateTime64(3, 'UTC'),
     expires_at      DateTime64(3, 'UTC'),
     approved_at     Nullable(DateTime64(3, 'UTC')),
     approved_by     Nullable(String)
@@ -253,7 +254,6 @@ CREATE TABLE IF NOT EXISTS omniwatch.audit_log
 ENGINE = MergeTree()
 PARTITION BY toYYYYMM(timestamp)
 ORDER BY (event_type, user_id, timestamp)
-TTL timestamp + INTERVAL 7 YEAR
 SETTINGS index_granularity = 8192;
 
 -- ─── Regions (Federation) ──────────────────────────────────────────

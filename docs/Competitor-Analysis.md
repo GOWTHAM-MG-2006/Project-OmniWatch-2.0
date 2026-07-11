@@ -245,7 +245,7 @@ TIER 5: Data Centers / Cloud Regions / Kubernetes Clusters
 
 | Entity Type | Description |
 |-------------|-------------|
-| `APPLICATION` | Frontend web/mobile app |
+| `APPLICATION` | Frontend web app |
 | `SERVICE` | Backend API service |
 | `PROCESS_GROUP` | Logical grouping of identical processes |
 | `PROCESS_GROUP_INSTANCE` | Individual process (PID) |

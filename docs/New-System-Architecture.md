@@ -56,7 +56,7 @@
 ║                                                                                      ║
 ║  ┌────────────────────────────────────────────────────────────────────────────────┐  ║
 ║  │  LAYER 11: NEXUSUX (Role-Adaptive Experience)                                  │  ║
-║  │  AI-First | SRE | Developer | Executive | Security | Mobile                    │  ║
+║  │  AI-First | SRE | Developer | Executive | Security                            │  ║
 ║  └──────────────────────────────────────┬─────────────────────────────────────────┘  ║
 ║                                         │                                            ║
 ║  ┌──────────────┐ ┌──────────────┐  ┌───┴──────────┐ ┌─────────────────────────┐     ║
@@ -139,7 +139,7 @@ Produces raw telemetry: Logs, Metrics, Traces, Security Events, LLM Call Data
 | **Mode 2: Runtime Bytecode Injection** | JVMTI, CLR Profiling API, V8 hooks | Java, .NET, Node.js, Python, PHP |
 | **Mode 3: OTLP Receiver** | OTLP/gRPC + OTLP/HTTP | OTel-instrumented apps, Prometheus, Loki, ES |
 | **Mode 4: Cloud API Polling** | AWS/Azure/GCP APIs, K8s Watch | Cloud resources, cost APIs, carbon APIs |
-| **Mode 5: Real User Monitoring** | Auto-injected JS, mobile SDKs | Core Web Vitals, Session Replay, mobile |
+| **Mode 5: Real User Monitoring** | Auto-injected JS | Core Web Vitals, Session Replay |
 | **Mode 6: LLM/GenAI Observability** | Framework hooks (LangChain, LlamaIndex) | Token count, latency, cost, agent chains |
 
 ### Key Features
@@ -283,7 +283,7 @@ LAYER 8: BUSINESS TRANSACTIONS (Revenue, conversion, SLA)
          ↕
 LAYER 7: GenAI / LLM SERVICES (Models, agents, RAG, vector DBs)
          ↕
-LAYER 6: APPLICATIONS (Web, mobile, SPAs, CLIs)
+LAYER 6: APPLICATIONS (Web, SPAs, CLIs)
          ↕
 LAYER 5: SERVICES (APIs, microservices, workers, queues)
          ↕
@@ -573,7 +573,7 @@ Incident → Resolution → Outcome Evaluation → Knowledge Base → Future Rec
 | **Layer 8 (Simulation)** | SimPy, Redis, Optuna |
 | **Layer 9 (Security)** | eBPF LSM hooks, Grype, Syft, Checkov |
 | **Layer 10 (Learning)** | Python, ClickHouse, MinIO, Scikit-Learn, PyTorch |
-| **Layer 11 (UX)** | React 19, TypeScript, FastAPI, Sigma.js, React Native |
+| **Layer 11 (UX)** | React 19, TypeScript, Vite, TailwindCSS, Sigma.js + Graphology, Recharts, D3.js, FastAPI |
 | **Drift (Cross-Cutting)** | ArgoCD, Ansible EDA, Terraform |
 
 ---

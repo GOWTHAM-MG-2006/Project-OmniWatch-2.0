@@ -278,7 +278,7 @@ Datadog:      "Integrate with everything. One pane of glass for all."
 | **UI complexity** | High (overwhelming) | Low-Medium (clean) | Medium (intuitive) |
 | **Learning curve** | Steep | Moderate | Low-Moderate |
 | **Dashboard customization** | ✅ Extensive | 🔶 Basic | ✅ Extensive |
-| **Mobile app** | ✅ Yes | ❌ No | ✅ Yes |
+| **Mobile app** | ✅ Yes | ❌ No | ❌ No |
 | **Collaboration features** | 🔶 Limited | ❌ No | ✅ Notebooks, shared dashboards |
 | **Keyboard shortcuts** | ❌ No | ❌ No | ✅ Yes |
 | **Dark mode** | ✅ Yes | ✅ Yes | ✅ Yes |
@@ -420,7 +420,6 @@ Datadog:      "Integrate with everything. One pane of glass for all."
 | 5 | Cloud SIEM integration — unified security + observability |
 | 6 | Continuous Profiler — code-level performance insights |
 | 7 | Strong CI/CD integration (GitHub Actions, GitLab CI) |
-| 8 | Mobile app for on-the-go incident management |
 
 ---
 

@@ -162,11 +162,6 @@ Project-OmniWatch-2.0/
 │   ├── base.py                        ← BaseIntegration abstract class
 │   └── registry.py                    ← Integration registry
 │
-├── mobile/                            ← NEW: React Native Mobile App
-│   └── src/
-│       ├── screens/                   ← Dashboard, Incident, Topology, Settings
-│       └── services/                  ← API client, notifications
-│
 ├── billing/                           ← NEW: Pricing Engine
 │   ├── pricing\_engine.py             ← Usage-based pricing calculation
 │   └── pricing\_dashboard.py          ← FastAPI billing API
@@ -571,7 +566,7 @@ Layer 11: NEXUSUX (AI-First │ SRE │ Developer │ Executive │ Security)
 |Phase 4|Ecosystem|Layer 10 (Continuous Learning), Documentation, Project Completion|COMPLETE|
 |Phase 5|Testing & Performance|Performance Testing, Chaos Engineering, Disaster Recovery|COMPLETE|
 |Phase 6|Enterprise Features|Compliance (SOC2/ISO27001), SSO/RBAC, Multi-Region Federation, Partner Integrations (ServiceNow, GitHub, GitLab, Terraform), API Documentation, Deployment Guides|COMPLETE|
-|Phase 7|Ecosystem & Scale|Integration Library (25+), Mobile App, Pricing Engine, BusinessLens, CostBrain|COMPLETE|
+|Phase 7|Ecosystem & Scale|Integration Library (25+), Pricing Engine, BusinessLens, CostBrain|COMPLETE|
 
 **Check `docs/Build-Plan.md` for the full phase-by-phase roadmap.**
 
