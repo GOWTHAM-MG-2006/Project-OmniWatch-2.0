@@ -13,6 +13,8 @@ import logging
 import subprocess
 from typing import Any
 
+from remediation.config_drift import sanitize_commit, sanitize_entity
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,9 +35,9 @@ class GitIntegrator:
         Returns:
             Dict with success status and revert details.
         """
-        entity = drift_event.get("drifted_entity", "")
+        entity = sanitize_entity(drift_event.get("drifted_entity", ""))
         actual_state = drift_event.get("actual_state", {})
-        commit = actual_state.get("commit", "")
+        commit = sanitize_commit(actual_state.get("commit", ""))
 
         try:
             import git

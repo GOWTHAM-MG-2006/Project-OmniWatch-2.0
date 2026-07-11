@@ -46,8 +46,8 @@ class GroundedLLMClient:
         system_prompt: str | None = None,
         timeout: float = 30.0,
     ):
-        self._base_url = base_url or os.environ.get("VLLM_BASE_URL", "http://localhost:11434")
-        self._model = model or os.environ.get("VLLM_MODEL", "llama3")
+        self._base_url = base_url or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+        self._model = model or os.environ.get("OLLAMA_MODEL", "qwen3:8b")
         self._system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
         self._timeout = timeout
 
@@ -70,7 +70,7 @@ class GroundedLLMClient:
         full_prompt = self._build_prompt(prompt, context, include_grounding_suffix)
 
         try:
-            result = await self._call_vllm(full_prompt)
+            result = await self._call_llm(full_prompt)
             logger.info("LLM response received: %d chars", len(result["response"]))
             return result
         except Exception as e:
@@ -95,11 +95,11 @@ class GroundedLLMClient:
 
         return "".join(parts)
 
-    async def _call_vllm(self, prompt: str) -> dict[str, Any]:
-        """Call the vLLM/Ollama-compatible API endpoint.
+    async def _call_llm(self, prompt: str) -> dict[str, Any]:
+        """Call the Ollama API endpoint.
 
-        Uses httpx for async HTTP. The endpoint follows the OpenAI-compatible
-        chat completions format used by both vLLM and Ollama.
+        Uses httpx for async HTTP. The endpoint follows Ollama's native
+        /api/chat format for chat completions.
 
         Raises:
             ConnectionError: If the inference server is unreachable.
@@ -110,15 +110,18 @@ class GroundedLLMClient:
         except ImportError:
             raise ConnectionError("httpx is not installed; cannot call LLM API")
 
-        url = f"{self._base_url.rstrip('/')}/v1/chat/completions"
+        url = f"{self._base_url.rstrip('/')}/api/chat"
         payload = {
             "model": self._model,
             "messages": [
                 {"role": "system", "content": self._system_prompt},
                 {"role": "user", "content": prompt},
             ],
-            "temperature": 0.3,
-            "max_tokens": 2048,
+            "stream": False,
+            "options": {
+                "temperature": 0.3,
+                "num_predict": 2048,
+            },
         }
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:
@@ -126,15 +129,14 @@ class GroundedLLMClient:
             response.raise_for_status()
             data = response.json()
 
-        content = data["choices"][0]["message"]["content"]
-        usage = data.get("usage", {})
+        content = data.get("message", {}).get("content", "")
         return {
             "response": content,
             "model": data.get("model", self._model),
             "usage": {
-                "prompt_tokens": usage.get("prompt_tokens", 0),
-                "completion_tokens": usage.get("completion_tokens", 0),
-                "total_tokens": usage.get("total_tokens", 0),
+                "prompt_tokens": data.get("prompt_eval_count", 0),
+                "completion_tokens": data.get("eval_count", 0),
+                "total_tokens": data.get("prompt_eval_count", 0) + data.get("eval_count", 0),
             },
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }

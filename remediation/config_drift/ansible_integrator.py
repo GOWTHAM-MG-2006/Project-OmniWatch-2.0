@@ -9,9 +9,12 @@ Outputs: Ansible playbook execution via subprocess
 Technology: Python + subprocess (ansible-playbook CLI)
 """
 
+import json
 import logging
 import subprocess
 from typing import Any
+
+from remediation.config_drift import sanitize_config_value, sanitize_entity
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +36,9 @@ class AnsibleIntegrator:
         Returns:
             Dict with success status and execution details.
         """
-        entity = drift_event.get("drifted_entity", "")
-        expected = drift_event.get("expected_state", {})
-        actual = drift_event.get("actual_state", {})
+        entity = sanitize_entity(drift_event.get("drifted_entity", ""))
+        expected = sanitize_config_value(json.dumps(drift_event.get("expected_state", {})))
+        actual = sanitize_config_value(json.dumps(drift_event.get("actual_state", {})))
 
         try:
             cmd = [

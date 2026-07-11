@@ -1,15 +1,17 @@
 """OmniWatch 2.0 — NexusUX: Topology Route"""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Any, Optional, List
 from datetime import datetime
 
 from auth.middleware import require_auth
 from compliance.audit_logger import AuditLogger
+from dashboard.backend.services.topology_service import TopologyService
 
 router = APIRouter()
 audit_logger = AuditLogger()
+topo_service = TopologyService()
 
 
 # ─── Pydantic Models ───────────────────────────────────────────────
@@ -67,7 +69,9 @@ async def get_topology_graph(
         action="graph",
         outcome="success",
     )
-    return {"nodes": [], "edges": [], "node_count": 0, "edge_count": 0}
+    nodes = topo_service.get_nodes()
+    edges = topo_service.get_edges()
+    return {"nodes": nodes, "edges": edges, "node_count": len(nodes), "edge_count": len(edges)}
 
 
 @router.get("/entity/{entity_id}", response_model=EntityResponse)
@@ -76,6 +80,9 @@ async def get_entity(
     user: dict = Depends(require_auth("topology", "read")),
 ):
     """Get a specific entity and its neighbors."""
+    entity = topo_service.get_entity(entity_id)
+    if not entity:
+        raise HTTPException(status_code=404, detail=f"Entity {entity_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -84,7 +91,7 @@ async def get_entity(
         action="entity",
         outcome="success",
     )
-    return {"entity_id": entity_id, "entity": None, "neighbors": []}
+    return {"entity_id": entity_id, "entity": entity, "neighbors": topo_service.get_neighbors(entity_id)}
 
 
 @router.get("/dependencies/{entity_id}")
@@ -93,6 +100,10 @@ async def get_dependencies(
     user: dict = Depends(require_auth("topology", "read")),
 ):
     """Get dependencies of an entity."""
+    # TODO: Replace with real database lookup
+    entity = None  # db.get_entity(entity_id)
+    if not entity:
+        raise HTTPException(status_code=404, detail=f"Entity {entity_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -110,6 +121,9 @@ async def get_blast_radius(
     user: dict = Depends(require_auth("topology", "read")),
 ):
     """Calculate blast radius for an entity."""
+    entity = topo_service.get_entity(entity_id)
+    if not entity:
+        raise HTTPException(status_code=404, detail=f"Entity {entity_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -118,12 +132,7 @@ async def get_blast_radius(
         action="blast_radius",
         outcome="success",
     )
-    return {
-        "root_cause": entity_id,
-        "impacted_entities": [],
-        "impacted_count": 0,
-        "estimated_users_affected": 0,
-    }
+    return topo_service.get_blast_radius(entity_id)
 
 
 @router.get("/drift", response_model=DriftResponse)

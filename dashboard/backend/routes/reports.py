@@ -1,15 +1,17 @@
 """OmniWatch 2.0 — NexusUX: Reports Route"""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Any, Optional, List
 from datetime import datetime
 
 from auth.middleware import require_auth
 from compliance.audit_logger import AuditLogger
+from dashboard.backend.services.data_service import DataService
 
 router = APIRouter()
 audit_logger = AuditLogger()
+data_service = DataService()
 
 
 # ─── Pydantic Models ───────────────────────────────────────────────
@@ -63,6 +65,10 @@ async def get_report(
     user: dict = Depends(require_auth("reports", "read")),
 ):
     """Get a specific report."""
+    # TODO: Replace with real database lookup
+    report = None  # db.get_report(report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -71,7 +77,7 @@ async def get_report(
         action="get",
         outcome="success",
     )
-    return {"report_id": report_id, "status": "not_found"}
+    return report
 
 
 @router.post("/compliance", response_model=ReportResponse, status_code=202)
@@ -80,6 +86,11 @@ async def generate_compliance_report(
     user: dict = Depends(require_auth("reports", "write")),
 ):
     """Generate a compliance report (SOC2/ISO27001)."""
+    valid_types = ["soc2", "iso27001"]
+    if data.report_type.lower() not in valid_types:
+        raise HTTPException(status_code=400, detail=f"Invalid report type '{data.report_type}'. Valid types: {valid_types}")
+    if data.lookback_days and (data.lookback_days < 1 or data.lookback_days > 365):
+        raise HTTPException(status_code=400, detail="lookback_days must be between 1 and 365")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -105,4 +116,4 @@ async def get_mttr_report(
         action="mttr",
         outcome="success",
     )
-    return {"mttr_minutes": 0, "trend": [], "period": "30d"}
+    return data_service.get_mttr()

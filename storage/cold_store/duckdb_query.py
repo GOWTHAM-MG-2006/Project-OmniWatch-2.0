@@ -15,6 +15,8 @@ from typing import Any
 
 import duckdb
 
+from storage.query_validator import validate_query, validate_view_name, validate_parquet_path
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,6 +28,10 @@ class DuckDBQueryEngine:
 
     def register_parquet(self, view_name: str, path: str) -> None:
         """Register a Parquet file (or directory) as a DuckDB view."""
+        if not validate_view_name(view_name):
+            raise ValueError(f"Invalid view name: {view_name}")
+        if not validate_parquet_path(path):
+            raise ValueError(f"Invalid parquet path: {path}")
         p = Path(path)
         if p.is_dir():
             self._conn.execute(
@@ -41,6 +47,8 @@ class DuckDBQueryEngine:
 
     def query_parquet(self, path: str, sql: str, view_name: str = "data") -> list[dict[str, Any]]:
         """Register a Parquet source and execute SQL against it."""
+        if not validate_query(sql):
+            raise ValueError("Query contains disallowed keywords or is not a read-only statement")
         self.register_parquet(view_name, path)
         result = self._conn.execute(sql).fetchall()
         columns = [desc[0] for desc in self._conn.description]
@@ -53,6 +61,8 @@ class DuckDBQueryEngine:
             sources: mapping of view_name -> parquet path
             sql: SQL query referencing the view names
         """
+        if not validate_query(sql):
+            raise ValueError("Query contains disallowed keywords or is not a read-only statement")
         for view_name, path in sources.items():
             self.register_parquet(view_name, path)
         result = self._conn.execute(sql).fetchall()

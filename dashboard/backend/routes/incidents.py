@@ -1,15 +1,17 @@
 """OmniWatch 2.0 — NexusUX: Incidents Route"""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Any, Optional, List
 from datetime import datetime
 
 from auth.middleware import require_auth
 from compliance.audit_logger import AuditLogger
+from dashboard.backend.services.data_service import DataService
 
 router = APIRouter()
 audit_logger = AuditLogger()
+data_service = DataService()
 
 
 # ─── Pydantic Models ───────────────────────────────────────────────
@@ -58,7 +60,8 @@ async def list_incidents(
         outcome="success",
         metadata={"severity": severity, "status": status},
     )
-    return {"incidents": [], "total": 0}
+    incidents = data_service.get_active_incidents(status=status or "OPEN")
+    return {"incidents": incidents, "total": len(incidents)}
 
 
 @router.get("/{incident_id}", response_model=IncidentResponse)
@@ -67,6 +70,10 @@ async def get_incident(
     user: dict = Depends(require_auth("incidents", "read")),
 ):
     """Get a specific incident by ID."""
+    # TODO: Replace with real database lookup
+    incident = None  # db.get_incident(incident_id)
+    if not incident:
+        raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -75,7 +82,7 @@ async def get_incident(
         action="get",
         outcome="success",
     )
-    return {"incident_id": incident_id, "status": "not_found"}
+    return incident
 
 
 @router.post("/", response_model=IncidentResponse, status_code=201)
@@ -103,6 +110,10 @@ async def update_incident(
     user: dict = Depends(require_auth("incidents", "write")),
 ):
     """Update an incident."""
+    # TODO: Replace with real database lookup
+    incident = None  # db.get_incident(incident_id)
+    if not incident:
+        raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -120,6 +131,10 @@ async def get_incident_timeline(
     user: dict = Depends(require_auth("incidents", "read")),
 ):
     """Get the timeline for an incident."""
+    # TODO: Replace with real database lookup
+    incident = None  # db.get_incident(incident_id)
+    if not incident:
+        raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),

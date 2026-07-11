@@ -1,6 +1,6 @@
 """OmniWatch 2.0 — NexusUX: Approvals Route"""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Any, Optional, List
 from datetime import datetime
@@ -56,6 +56,10 @@ async def get_approval(
     user: dict = Depends(require_auth("approvals", "read")),
 ):
     """Get a specific approval."""
+    # TODO: Replace with real database lookup
+    approval = None  # db.get_approval(approval_id)
+    if not approval:
+        raise HTTPException(status_code=404, detail=f"Approval {approval_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -64,7 +68,7 @@ async def get_approval(
         action="get",
         outcome="success",
     )
-    return {"approval_id": approval_id, "status": "not_found"}
+    return approval
 
 
 @router.post("/{approval_id}/approve", response_model=ApprovalResponse)
@@ -74,6 +78,10 @@ async def approve_action(
     user: dict = Depends(require_auth("approvals", "write")),
 ):
     """Approve a pending action."""
+    # TODO: Replace with real database lookup
+    approval = None  # db.get_approval(approval_id)
+    if not approval:
+        raise HTTPException(status_code=404, detail=f"Approval {approval_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -92,6 +100,10 @@ async def reject_action(
     user: dict = Depends(require_auth("approvals", "write")),
 ):
     """Reject a pending action."""
+    # TODO: Replace with real database lookup
+    approval = None  # db.get_approval(approval_id)
+    if not approval:
+        raise HTTPException(status_code=404, detail=f"Approval {approval_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),

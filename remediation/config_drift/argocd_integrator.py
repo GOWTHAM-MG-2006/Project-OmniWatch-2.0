@@ -15,6 +15,8 @@ from typing import Any
 
 import httpx
 
+from remediation.config_drift import sanitize_entity
+
 logger = logging.getLogger(__name__)
 
 ARGOCD_BASE_URL = os.getenv("ARGOCD_ENDPOINT", "http://localhost:8080")
@@ -40,6 +42,7 @@ class ArgoCDIntegrator:
             Dict with success status and sync details.
         """
         entity = drift_event.get("drifted_entity", "")
+        entity = sanitize_entity(entity)
         # Extract app name from entity (format: namespace/deployment-name)
         parts = entity.split("/")
         app_name = parts[-1] if parts else entity
@@ -47,7 +50,7 @@ class ArgoCDIntegrator:
         try:
             url = f"{self.base_url}/api/v1/applications/{app_name}/sync"
             headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
-            async with httpx.AsyncClient(timeout=30.0, verify=False) as client:
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 resp = await client.post(url, headers=headers, json={
                     "force": True,
                     "prune": True,

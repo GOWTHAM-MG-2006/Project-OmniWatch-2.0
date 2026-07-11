@@ -13,6 +13,8 @@ import logging
 import subprocess
 from typing import Any
 
+from remediation.config_drift import sanitize_entity
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,12 +35,12 @@ class TerraformIntegrator:
         Returns:
             Dict with success status and apply details.
         """
-        entity = drift_event.get("drifted_entity", "")
+        entity = sanitize_entity(drift_event.get("drifted_entity", ""))
 
         try:
             # Plan first
             plan_cmd = ["terraform", "plan", "-out=tfplan", "-no-color"]
-            plan_proc = subprocess.run(plan_cmd, capture_output=True, text=True, timeout=120, cwd=entity)
+            plan_proc = subprocess.run(plan_cmd, capture_output=True, text=True, timeout=120, cwd=self.terraform_dir)
 
             if plan_proc.returncode == 0:
                 # No changes needed
@@ -47,7 +49,7 @@ class TerraformIntegrator:
             if plan_proc.returncode == 2:
                 # Changes detected — apply
                 apply_cmd = ["terraform", "apply", "-auto-approve", "tfplan", "-no-color"]
-                apply_proc = subprocess.run(apply_cmd, capture_output=True, text=True, timeout=300, cwd=entity)
+                apply_proc = subprocess.run(apply_cmd, capture_output=True, text=True, timeout=300, cwd=self.terraform_dir)
                 if apply_proc.returncode == 0:
                     return {"success": True, "output": f"Terraform apply completed for {entity}"}
                 return {"success": False, "output": apply_proc.stderr.strip()[-500:]}

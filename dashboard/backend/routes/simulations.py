@@ -1,15 +1,19 @@
 """OmniWatch 2.0 — NexusUX: Simulations Route"""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Any, Optional, List
 from datetime import datetime
 
 from auth.middleware import require_auth
 from compliance.audit_logger import AuditLogger
+from dashboard.backend.services.data_service import DataService
+from dashboard.backend.services.simulax_service import SimulaXService
 
 router = APIRouter()
 audit_logger = AuditLogger()
+data_service = DataService()
+sim_service = SimulaXService()
 
 
 # ─── Pydantic Models ───────────────────────────────────────────────
@@ -56,7 +60,8 @@ async def list_simulations(
         outcome="success",
         metadata={"mode": mode},
     )
-    return {"simulations": [], "total": 0}
+    simulations = data_service.get_simulations()
+    return {"simulations": simulations, "total": len(simulations)}
 
 
 @router.get("/{simulation_id}", response_model=SimulationResponse)
@@ -65,6 +70,10 @@ async def get_simulation(
     user: dict = Depends(require_auth("simulations", "read")),
 ):
     """Get a specific simulation result."""
+    # TODO: Replace with real database lookup
+    simulation = None  # db.get_simulation(simulation_id)
+    if not simulation:
+        raise HTTPException(status_code=404, detail=f"Simulation {simulation_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -73,7 +82,7 @@ async def get_simulation(
         action="get",
         outcome="success",
     )
-    return {"simulation_id": simulation_id, "status": "not_found"}
+    return simulation
 
 
 @router.post("/", response_model=SimulationResponse, status_code=202)
@@ -82,6 +91,16 @@ async def run_simulation(
     user: dict = Depends(require_auth("simulations", "write")),
 ):
     """Run a new simulation."""
+    if data.mode == "REMEDIATION_SIMULATION":
+        result = sim_service.run_remediation_sim(data.parameters or {})
+    elif data.mode == "CAPACITY_SIMULATION":
+        result = sim_service.run_capacity_sim(data.parameters or {})
+    elif data.mode == "DEPLOYMENT_SIMULATION":
+        result = sim_service.run_deployment_sim(data.parameters or {})
+    elif data.mode == "CHAOS_SIMULATION":
+        result = sim_service.run_chaos_sim(data.parameters or {})
+    else:
+        raise HTTPException(status_code=400, detail=f"Invalid mode: {data.mode}")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -91,7 +110,7 @@ async def run_simulation(
         outcome="success",
         metadata={"mode": data.mode},
     )
-    return {"simulation_id": "SIM-NEW", "status": "started"}
+    return result
 
 
 @router.get("/modes", response_model=SimulationModesResponse)

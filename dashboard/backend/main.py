@@ -14,15 +14,17 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from dashboard.backend.routes import (
     incidents, topology, metrics, approvals,
     knowledge, simulations, security, config_drift, reports,
-    audit, auth_routes,
+    audit, auth_routes, policies,
 )
 from dashboard.backend.websocket import ConnectionManager
+from dashboard.backend.ws_auth import verify_ws_token
 from auth.middleware import require_auth  # noqa: F401 — exported for route modules
 
 # Configure structured JSON logging
@@ -47,6 +49,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ─── Global Exception Handlers ──────────────────────────────────────
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Return structured JSON for HTTP errors."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail, "status_code": exc.status_code},
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch-all: log and return 500 for unhandled exceptions."""
+    logger.error("Unhandled exception: %s", exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error", "type": type(exc).__name__},
+    )
+
+
 # WebSocket connection manager
 ws_manager = ConnectionManager()
 
@@ -62,6 +86,7 @@ app.include_router(config_drift.router, prefix="/api/v1/config-drift", tags=["co
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
 app.include_router(audit.router, prefix="/api/v1/audit", tags=["audit"])
 app.include_router(auth_routes.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(policies.router, prefix="/api/v1/policies", tags=["policies"])
 
 
 @app.get("/health")
@@ -94,7 +119,13 @@ async def system_status():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time event streaming."""
-    await ws_manager.connect(websocket)
+    # Authenticate via JWT token in query params
+    token = websocket.query_params.get("token", "")
+    user = verify_ws_token(token)
+    if user is None:
+        await websocket.close(code=4001, reason="Unauthorized")
+        return
+    await ws_manager.connect(websocket, user=user)
     try:
         while True:
             data = await websocket.receive_text()

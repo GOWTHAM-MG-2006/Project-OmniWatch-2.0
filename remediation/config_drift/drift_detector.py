@@ -16,6 +16,8 @@ import subprocess
 from datetime import datetime, timezone
 from typing import Any
 
+from remediation.config_drift import sanitize_entity
+
 logger = logging.getLogger(__name__)
 
 
@@ -76,8 +78,10 @@ class DriftDetector:
         """
         drifts = []
         try:
+            namespace = sanitize_entity(namespace)
             cmd = ["kubectl", "get", "deployments", "-n", namespace, "-o", "json"]
             if kubeconfig:
+                kubeconfig = sanitize_entity(kubeconfig)
                 cmd.extend(["--kubeconfig", kubeconfig])
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
             if proc.returncode == 0:

@@ -9,6 +9,7 @@ Outputs: Graph queries for AI causal analysis and blast radius
 """
 
 import os
+import re
 import json
 import logging
 from typing import Any
@@ -41,8 +42,20 @@ RELATIONSHIP_TYPES = {
 }
 
 
+_VALID_NODE_TYPE = re.compile(r'^[A-Za-z][A-Za-z0-9_]*$')
+_VALID_REL_TYPE = re.compile(r'^[A-Za-z][A-Za-z0-9_]*$')
+_VALID_ID = re.compile(r'^[A-Za-z0-9_\-\.]+$')
+
+
 class GraphStore:
     """Apache Kuzu embedded graph database client."""
+
+    def _validate_identifier(self, name: str, kind: str = "identifier") -> str:
+        """Validate that an identifier is safe for use in Cypher queries."""
+        pattern = _VALID_NODE_TYPE if kind == "node_type" else _VALID_REL_TYPE if kind == "rel_type" else _VALID_ID
+        if not pattern.match(name):
+            raise ValueError(f"Invalid {kind}: {name!r}")
+        return name
 
     def __init__(self, database_path: str | None = None):
         self.db_path = database_path or os.getenv("KUZU_DATABASE_PATH", "./data/omniwatch-graph")
@@ -113,16 +126,21 @@ class GraphStore:
 
     def create_node(self, node_type: str, properties: dict[str, Any]) -> bool:
         """Create a node of the specified type."""
+        self._validate_identifier(node_type, "node_type")
         if node_type not in NODE_TYPES:
             raise ValueError(f"Unknown node type: {node_type}")
 
         props = NODE_TYPES[node_type]
-        prop_names = ", ".join(props)
-        prop_values = ", ".join([f"'{properties.get(p, '')}'" for p in props])
+        prop_parts = []
+        params = {}
+        for p in props:
+            params[p] = properties.get(p, '')
+            prop_parts.append(f"{p}: ${p}")
 
-        query = f"CREATE (n:{node_type} {{ {prop_names} := {prop_values} }})"
+        props_str = ", ".join(prop_parts)
+        query = f"CREATE (n:{node_type} {{ {props_str} }})"
         try:
-            self.conn.execute(query)
+            self.conn.execute(query, parameters=params)
             return True
         except Exception as e:
             logger.error("Failed to create %s node: %s", node_type, e)
@@ -138,27 +156,31 @@ class GraphStore:
         to_type: str = "Service",
     ) -> bool:
         """Create a relationship between two nodes."""
+        self._validate_identifier(rel_type, "rel_type")
+        self._validate_identifier(from_id)
+        self._validate_identifier(to_id)
+        self._validate_identifier(from_type, "node_type")
+        self._validate_identifier(to_type, "node_type")
         if rel_type not in RELATIONSHIP_TYPES:
             raise ValueError(f"Unknown relationship type: {rel_type}")
 
         props = properties or {}
         prop_str = ""
+        params = {"from_id": from_id, "to_id": to_id}
         if props:
             prop_parts = []
             for k, v in props.items():
-                if isinstance(v, str):
-                    prop_parts.append(f"{k}: '{v}'")
-                else:
-                    prop_parts.append(f"{k}: {v}")
+                params[f"r_{k}"] = v
+                prop_parts.append(f"{k}: $r_{k}")
             prop_str = " {" + ", ".join(prop_parts) + "}"
 
         query = f"""
         MATCH (a:{from_type}), (b:{to_type})
-        WHERE a.id = '{from_id}' AND b.id = '{to_id}'
+        WHERE a.id = $from_id AND b.id = $to_id
         CREATE (a)-[:{rel_type}{prop_str}]->(b)
         """
         try:
-            self.conn.execute(query)
+            self.conn.execute(query, parameters=params)
             return True
         except Exception as e:
             logger.error("Failed to create relationship %s: %s", rel_type, e)
@@ -166,9 +188,11 @@ class GraphStore:
 
     def get_node(self, node_type: str, node_id: str) -> dict[str, Any] | None:
         """Get a node by ID."""
-        query = f"MATCH (n:{node_type}) WHERE n.id = '{node_id}' RETURN n.*"
+        self._validate_identifier(node_type, "node_type")
+        self._validate_identifier(node_id)
+        query = f"MATCH (n:{node_type}) WHERE n.id = $node_id RETURN n.*"
         try:
-            result = self.conn.execute(query)
+            result = self.conn.execute(query, parameters={"node_id": node_id})
             if result.has_next():
                 row = result.get_next()
                 return {col: row[i] for i, col in enumerate(result.get_column_names())}
@@ -179,17 +203,21 @@ class GraphStore:
 
     def query_neighbors(self, node_id: str, direction: str = "both", rel_type: str | None = None) -> list[dict[str, Any]]:
         """Query neighbors of a node."""
-        rel_clause = f":{rel_type}" if rel_type else ""
+        self._validate_identifier(node_id)
+        rel_clause = ""
+        if rel_type:
+            self._validate_identifier(rel_type, "rel_type")
+            rel_clause = f":{rel_type}"
 
         if direction == "out":
-            query = f"MATCH (a:Service)-[{rel_clause}]->(b) WHERE a.id = '{node_id}' RETURN b.*"
+            query = f"MATCH (a:Service)-[{rel_clause}]->(b) WHERE a.id = $node_id RETURN b.*"
         elif direction == "in":
-            query = f"MATCH (a)-[{rel_clause}]->(b:Service) WHERE b.id = '{node_id}' RETURN a.*"
+            query = f"MATCH (a)-[{rel_clause}]->(b:Service) WHERE b.id = $node_id RETURN a.*"
         else:
-            query = f"MATCH (a:Service)-[{rel_clause}]-(b) WHERE a.id = '{node_id}' RETURN b.*"
+            query = f"MATCH (a:Service)-[{rel_clause}]-(b) WHERE a.id = $node_id RETURN b.*"
 
         try:
-            result = self.conn.execute(query)
+            result = self.conn.execute(query, parameters={"node_id": node_id})
             neighbors = []
             while result.has_next():
                 row = result.get_next()
@@ -201,14 +229,16 @@ class GraphStore:
 
     def shortest_path(self, from_id: str, to_id: str) -> list[dict[str, Any]]:
         """Find shortest path between two nodes."""
-        query = f"""
+        self._validate_identifier(from_id)
+        self._validate_identifier(to_id)
+        query = """
         MATCH (a:Service), (b:Service),
               path = shortestPath((a)-[*]-(b))
-        WHERE a.id = '{from_id}' AND b.id = '{to_id}'
+        WHERE a.id = $from_id AND b.id = $to_id
         RETURN path
         """
         try:
-            result = self.conn.execute(query)
+            result = self.conn.execute(query, parameters={"from_id": from_id, "to_id": to_id})
             paths = []
             while result.has_next():
                 row = result.get_next()
@@ -220,9 +250,11 @@ class GraphStore:
 
     def update_anomaly_score(self, node_type: str, node_id: str, score: float) -> bool:
         """Update the anomaly score for a node."""
-        query = f"MATCH (n:{node_type}) WHERE n.id = '{node_id}' SET n.anomaly_score = {score}"
+        self._validate_identifier(node_type, "node_type")
+        self._validate_identifier(node_id)
+        query = f"MATCH (n:{node_type}) WHERE n.id = $node_id SET n.anomaly_score = $score"
         try:
-            self.conn.execute(query)
+            self.conn.execute(query, parameters={"node_id": node_id, "score": score})
             return True
         except Exception as e:
             logger.error("Failed to update anomaly score: %s", e)
@@ -230,9 +262,10 @@ class GraphStore:
 
     def get_all_nodes(self, node_type: str, limit: int = 1000) -> list[dict[str, Any]]:
         """Get all nodes of a type."""
-        query = f"MATCH (n:{node_type}) RETURN n.* LIMIT {limit}"
+        self._validate_identifier(node_type, "node_type")
+        query = f"MATCH (n:{node_type}) RETURN n.* LIMIT $limit"
         try:
-            result = self.conn.execute(query)
+            result = self.conn.execute(query, parameters={"limit": limit})
             nodes = []
             while result.has_next():
                 row = result.get_next()
@@ -244,9 +277,11 @@ class GraphStore:
 
     def delete_node(self, node_type: str, node_id: str) -> bool:
         """Delete a node and its relationships."""
-        query = f"MATCH (n:{node_type}) WHERE n.id = '{node_id}' DETACH DELETE n"
+        self._validate_identifier(node_type, "node_type")
+        self._validate_identifier(node_id)
+        query = f"MATCH (n:{node_type}) WHERE n.id = $node_id DETACH DELETE n"
         try:
-            self.conn.execute(query)
+            self.conn.execute(query, parameters={"node_id": node_id})
             return True
         except Exception as e:
             logger.error("Failed to delete node: %s", e)

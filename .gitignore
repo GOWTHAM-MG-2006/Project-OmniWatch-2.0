@@ -1,3 +1,26 @@
+# ==========================================
+# OmniWatch 2.0 - Git Ignore Rules
+# ==========================================
+
+# Environment files (NEVER commit)
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Keys and certificates (NEVER commit)
+*.pem
+*.key
+*.p12
+*.p12b
+*.pfx
+*.crt
+*.cert
+id_rsa*
+id_ed25519*
+jwt_private.pem
+jwt_public.pem
+
 # Python
 __pycache__/
 *.py[cod]
@@ -7,17 +30,20 @@ __pycache__/
 .venv/
 venv/
 env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
 
-# Node
+# Node.js
 node_modules/
 dist/
 build/
+.next/
+.nuxt/
 .cache/
 
-# Environment
-.env
-.env.local
-.env.*.local
+# Docker
+.docker/
 
 # IDE
 .vscode/
@@ -29,15 +55,45 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
 
 # Project-specific
 Project-Details/
 .mimocode/
 docs/compose/
 data/
-*.log
 
-# Build artifacts
-*.egg-info/
-dist/
-build/
+# MinIO data
+minio-data/
+
+# ClickHouse data
+clickhouse-data/
+
+# Redis data
+redis-data/
+
+# Kafka data
+kafka-data/
+
+# Ollama models
+ollama-models/
+
+# Kuzu database files
+*.kuzu
+kuzu-data/
+
+# ML models (large files)
+models/*.pt
+models/*.onnx
+models/*.pkl
+*.pickle

@@ -13,7 +13,8 @@ class TestEnhancedBenchmarkSuite:
         result = suite.detect_regressions()
         assert isinstance(result, list)
 
-    def test_profile_resources(self):
+    def test_generate_report(self):
         suite = EnhancedBenchmarkSuite()
-        result = suite.profile_resources()
-        assert "cpu_percent" in result
+        suite.run_benchmarks()
+        report = suite.generate_markdown_report()
+        assert "OmniWatch Benchmark Report" in report

@@ -21,6 +21,14 @@ import redis
 
 logger = logging.getLogger(__name__)
 
+try:
+    from defusedxml.lxml import fromstring as defused_fromstring
+    from lxml import etree
+    HAS_DEFUSEDXML = True
+except ImportError:
+    HAS_DEFUSEDXML = False
+    logger.warning("defusedxml not installed — SAML2 signature validation disabled")
+
 # RS256 Key Configuration — REQUIRED environment variables
 JWT_PRIVATE_KEY = os.environ.get("JWT_PRIVATE_KEY")
 JWT_PUBLIC_KEY = os.environ.get("JWT_PUBLIC_KEY")
@@ -260,6 +268,42 @@ class SAML2Provider:
         self.entity_id = entity_id
         self.sp_url = sp_url
 
+    def _validate_saml_signature(self, saml_response: str, certificate: str | None = None) -> bool:
+        """Validate SAML2 response signature."""
+        if not HAS_DEFUSEDXML:
+            logger.warning("SAML2 signature validation skipped — defusedxml not installed")
+            return True
+        try:
+            import base64
+            decoded = base64.b64decode(saml_response)
+            root = defused_fromstring(decoded)
+            ns = {"ds": "http://www.w3.org/2000/09/xmldsig#"}
+            signature = root.find(".//ds:Signature", ns)
+            if signature is None:
+                logger.warning("SAML2 response has no Signature element")
+                return False
+            # If no certificate provided, accept (for backwards compatibility)
+            if certificate is None:
+                return True
+            # Validate certificate and signature
+            sig_value = root.find(".//ds:SignatureValue", ns)
+            if sig_value is None:
+                return False
+            from cryptography.x509 import load_pem_x509_certificate
+            from cryptography.hazmat.primitives import hashes
+            from cryptography.hazmat.primitives.asymmetric import padding
+            cert = load_pem_x509_certificate(certificate.encode())
+            sig_bytes = base64.b64decode(sig_value.text)
+            signed_info = root.find(".//ds:SignedInfo", ns)
+            if signed_info is None:
+                return False
+            signed_info_bytes = etree.tostring(signed_info, method="c14n")
+            cert.public_key().verify(sig_bytes, signed_info_bytes, padding.PKCS1v15(), hashes.SHA256())
+            return True
+        except Exception as e:
+            logger.error("SAML2 signature validation failed: %s", e)
+            return False
+
     def create_authn_request(self) -> str:
         """
         Generate SAML AuthnRequest XML and return IdP redirect URL.
@@ -308,6 +352,10 @@ class SAML2Provider:
         from xml.etree import ElementTree
 
         try:
+            # Validate signature before processing
+            if not self._validate_saml_signature(saml_response, self.certificate):
+                raise ValueError("SAML2 signature validation failed")
+
             # Decode and parse
             decoded = base64.b64decode(saml_response)
             root = ElementTree.fromstring(decoded)

@@ -16,6 +16,8 @@ from typing import Any
 
 import clickhouse_connect
 
+from storage.query_validator import validate_query
+
 logger = logging.getLogger(__name__)
 
 
@@ -213,7 +215,9 @@ class WarmStore:
         return [dict(zip(result.column_names, row)) for row in result.result_rows]
 
     def execute(self, query: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
-        """Execute an arbitrary query."""
+        """Execute a validated query (read-only)."""
+        if not validate_query(query):
+            raise ValueError("Query contains disallowed keywords or is not a read-only statement")
         result = self.client.query(query, parameters=params or {})
         return [dict(zip(result.column_names, row)) for row in result.result_rows]
 

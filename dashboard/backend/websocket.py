@@ -11,7 +11,7 @@ Outputs: Pushed events to connected dashboard clients
 import json
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import WebSocket
 
@@ -24,17 +24,30 @@ class ConnectionManager:
     def __init__(self):
         self._connections: list[WebSocket] = []
         self._subscriptions: dict[str, list[WebSocket]] = {}
+        self._authenticated: dict[WebSocket, dict] = {}
 
-    async def connect(self, websocket: WebSocket):
-        """Accept a new WebSocket connection."""
+    async def connect(self, websocket: WebSocket, user: Optional[dict] = None):
+        """Accept a new WebSocket connection.
+
+        Args:
+            websocket: The WebSocket connection to accept.
+            user: Optional decoded JWT payload with user info.
+        """
         await websocket.accept()
         self._connections.append(websocket)
-        logger.info("WebSocket connected. Total: %d", len(self._connections))
+        if user:
+            self._authenticated[websocket] = user
+        logger.info(
+            "WebSocket connected. Total: %d, user: %s",
+            len(self._connections),
+            user.get("user_id", "unknown") if user else "anonymous",
+        )
 
     def disconnect(self, websocket: WebSocket):
         """Remove a WebSocket connection."""
         if websocket in self._connections:
             self._connections.remove(websocket)
+        self._authenticated.pop(websocket, None)
         # Remove from all subscriptions
         for topic in list(self._subscriptions.keys()):
             if websocket in self._subscriptions[topic]:

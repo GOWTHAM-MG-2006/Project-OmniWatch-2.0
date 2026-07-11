@@ -8,14 +8,34 @@ Outputs: Region status updates, healthy region lists
 """
 
 import os
+import re
 import json
 import logging
 from datetime import datetime, timezone
 from typing import Any
+from urllib.parse import urlparse
 
 import clickhouse_connect
 import redis
 import requests
+
+ALLOWED_HOSTS = re.compile(r'^(localhost|127\.0\.0\.1|[\w\-]+\.omniwatch\.io)$')
+BLOCKED_NETWORKS = re.compile(r'^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.)')
+
+
+def validate_endpoint_url(url: str) -> bool:
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            return False
+        hostname = parsed.hostname or ""
+        if BLOCKED_NETWORKS.match(hostname):
+            return False
+        if not ALLOWED_HOSTS.match(hostname):
+            return False
+        return True
+    except Exception:
+        return False
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +95,8 @@ class RegionManager:
         Returns:
             Registration confirmation dict.
         """
+        if not validate_endpoint_url(endpoint):
+            raise ValueError(f"Invalid or blocked endpoint URL: {endpoint}")
         now = datetime.now(timezone.utc)
         row = {
             "region_id": region_id,
@@ -130,6 +152,10 @@ class RegionManager:
 
         endpoint = result.result_rows[0][0]
         health_url = f"{endpoint.rstrip('/')}/health"
+
+        if not validate_endpoint_url(endpoint):
+            logger.warning("Blocked health check to invalid/blocked endpoint: %s", endpoint)
+            return {"region_id": region_id, "status": "blocked"}
 
         try:
             resp = requests.get(health_url, timeout=self.HEALTH_CHECK_TIMEOUT)

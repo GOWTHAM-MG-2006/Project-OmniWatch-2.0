@@ -3,13 +3,16 @@ from storage.connection_pool import ConnectionPoolManager
 
 
 class TestConnectionPoolManager:
-    def test_get_clickhouse_config(self):
+    def test_clickhouse_pool_exists(self):
         manager = ConnectionPoolManager()
-        config = manager.get_clickhouse_config()
-        assert "min_connections" in config
-        assert "max_connections" in config
+        assert manager.clickhouse is not None
 
-    def test_get_redis_config(self):
+    def test_redis_pool_exists(self):
         manager = ConnectionPoolManager()
-        config = manager.get_redis_config()
-        assert "max_connections" in config
+        assert manager.redis is not None
+
+    def test_get_pool_stats(self):
+        manager = ConnectionPoolManager()
+        stats = manager.get_pool_stats()
+        assert "clickhouse" in stats
+        assert "redis" in stats

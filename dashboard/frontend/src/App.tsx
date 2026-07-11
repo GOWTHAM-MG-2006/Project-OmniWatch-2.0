@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
+import ErrorBoundary from './components/ErrorBoundary'
 import SREMode from './pages/SREMode'
 import DeveloperMode from './pages/DeveloperMode'
 import ExecutiveMode from './pages/ExecutiveMode'
@@ -58,19 +59,21 @@ export default function App() {
 
         {/* Main content */}
         <main className="max-w-7xl mx-auto px-4 py-6">
-          <Routes>
-            <Route path="/" element={<SREMode />} />
-            <Route path="/developer" element={<DeveloperMode />} />
-            <Route path="/executive" element={<ExecutiveMode />} />
-            <Route path="/security" element={<SecurityMode />} />
-            <Route path="/ai-chat" element={<AIFirstChat />} />
-            <Route path="/incidents" element={<IncidentExplorer />} />
-            <Route path="/topology" element={<TopologyViewer />} />
-            <Route path="/knowledge" element={<KnowledgeBase />} />
-            <Route path="/policies" element={<PolicyManager />} />
-            <Route path="/simulations" element={<SimulaXDashboard />} />
-            <Route path="/config-drift" element={<ConfigDriftView />} />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<SREMode />} />
+              <Route path="/developer" element={<DeveloperMode />} />
+              <Route path="/executive" element={<ExecutiveMode />} />
+              <Route path="/security" element={<SecurityMode />} />
+              <Route path="/ai-chat" element={<AIFirstChat />} />
+              <Route path="/incidents" element={<IncidentExplorer />} />
+              <Route path="/topology" element={<TopologyViewer />} />
+              <Route path="/knowledge" element={<KnowledgeBase />} />
+              <Route path="/policies" element={<PolicyManager />} />
+              <Route path="/simulations" element={<SimulaXDashboard />} />
+              <Route path="/config-drift" element={<ConfigDriftView />} />
+            </Routes>
+          </ErrorBoundary>
         </main>
       </div>
     </BrowserRouter>
