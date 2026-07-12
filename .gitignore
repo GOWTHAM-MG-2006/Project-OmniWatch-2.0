@@ -73,6 +73,11 @@ Project-Details/
 docs/compose/
 data/
 
+# Sensitive files (NEVER commit)
+Github_Token*.txt
+*token*.txt
+*secret*.txt
+
 # MinIO data
 minio-data/
 

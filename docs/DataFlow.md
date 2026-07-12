@@ -25,7 +25,7 @@
 │  LAYER 3: STREAMFORGE (Intelligent Ingest Pipeline)                        │
 │                                                                             │
 │  Stage 1: Receipt & Validation                                             │
-│    → Multi-protocol: OTLP, PromQL, Loki, ES Bulk, Kafka                   │
+│    → Multi-protocol: OTLP, PromQL, ES Bulk, Kafka                   │
 │    → Schema validation, mTLS auth, rate limiting                           │
 │                                    │                                        │
 │                                    ▼                                        │

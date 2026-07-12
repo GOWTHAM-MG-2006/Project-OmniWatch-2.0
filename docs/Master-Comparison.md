@@ -93,7 +93,7 @@ Datadog:      "Integrate with everything. One pane of glass for all."
 | **RUM / Browser** | ✅ Auto-injected JS tag | ❌ No | ✅ Browser + Mobile SDKs |
 | **Synthetic monitoring** | ✅ API + Browser | ❌ No | ✅ API + Browser |
 | **Continuous profiling** | ❌ No (separate tool) | ❌ No | ✅ Continuous Profiler |
-| **Log collection** | ✅ Auto-discovered from processes | ✅ OTel + Loki-style | ✅ Agent + log pipelines |
+| **Log collection** | ✅ Auto-discovered from processes | ✅ OTel + ClickHouse | ✅ Agent + log pipelines |
 | **Metrics collection** | ✅ Full-stack auto | 🔶 Via OTel + Prometheus | ✅ 800+ integrations |
 | **Trace collection** | ✅ Full capture (no sampling) | 🔶 Head sampling (configurable) | 🔶 Head + tail sampling |
 | **Cloud API polling** | ✅ AWS, Azure, GCP | ❌ No | ✅ AWS, Azure, GCP (800+ integrations) |

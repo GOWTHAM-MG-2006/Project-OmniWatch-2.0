@@ -137,7 +137,7 @@ Produces raw telemetry: Logs, Metrics, Traces, Security Events, LLM Call Data
 |------|--------|----------|
 | **Mode 1: eBPF Kernel Probes** | kprobes, uprobes, tracepoints, XDP/TC, LSM hooks | HTTP/gRPC/SQL, network, file I/O, process lifecycle |
 | **Mode 2: Runtime Bytecode Injection** | JVMTI, CLR Profiling API, V8 hooks | Java, .NET, Node.js, Python, PHP |
-| **Mode 3: OTLP Receiver** | OTLP/gRPC + OTLP/HTTP | OTel-instrumented apps, Prometheus, Loki, ES |
+| **Mode 3: OTLP Receiver** | OTLP/gRPC + OTLP/HTTP | OTel-instrumented apps, Prometheus, ES |
 | **Mode 4: Cloud API Polling** | AWS/Azure/GCP APIs, K8s Watch | Cloud resources, cost APIs, carbon APIs |
 | **Mode 5: Real User Monitoring** | Auto-injected JS | Core Web Vitals, Session Replay |
 | **Mode 6: LLM/GenAI Observability** | Framework hooks (LangChain, LlamaIndex) | Token count, latency, cost, agent chains |
@@ -168,7 +168,7 @@ Produces raw telemetry: Logs, Metrics, Traces, Security Events, LLM Call Data
 
 ```
 Stage 1: RECEIPT & VALIDATION
-  → Multi-protocol: OTLP, PromQL, Loki, ES Bulk, Kafka
+  → Multi-protocol: OTLP, PromQL, ES Bulk, Kafka
   → Schema validation, mTLS, rate limiting
 
 Stage 2: ENRICHMENT ENGINE
