@@ -31,8 +31,10 @@ class ParquetWriter:
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
         self.minio_endpoint = minio_endpoint or os.getenv("MINIO_ENDPOINT", "localhost:9001")
-        self.minio_access_key = minio_access_key or os.getenv("MINIO_ACCESS_KEY", "minioadmin")
-        self.minio_secret_key = minio_secret_key or os.getenv("MINIO_SECRET_KEY", "minioadmin")
+        self.minio_access_key = minio_access_key or os.environ.get("MINIO_ACCESS_KEY")
+        self.minio_secret_key = minio_secret_key or os.environ.get("MINIO_SECRET_KEY")
+        if not self.minio_access_key or not self.minio_secret_key:
+            logger.warning("MINIO_ACCESS_KEY/MINIO_SECRET_KEY not set; MinIO upload disabled")
         self._minio_client = None
 
     @property

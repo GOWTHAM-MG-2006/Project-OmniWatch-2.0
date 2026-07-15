@@ -58,27 +58,6 @@ async def list_knowledge_entries(
     return {"entries": entries, "total": len(entries)}
 
 
-@router.get("/{entry_id}", response_model=KnowledgeEntryResponse)
-async def get_knowledge_entry(
-    entry_id: str,
-    user: dict = Depends(require_auth("knowledge", "read")),
-):
-    """Get a specific knowledge base entry."""
-    # TODO: Replace with real database lookup
-    entry = None  # db.get_knowledge_entry(entry_id)
-    if not entry:
-        raise HTTPException(status_code=404, detail=f"Knowledge entry {entry_id} not found")
-    audit_logger.log_event(
-        event_type="api_call",
-        user_id=user.get("user_id"),
-        resource_type="knowledge",
-        resource_id=entry_id,
-        action="get",
-        outcome="success",
-    )
-    return entry
-
-
 @router.get("/search", response_model=KnowledgeSearchResponse)
 async def search_knowledge(
     query: str,
@@ -97,3 +76,23 @@ async def search_knowledge(
         metadata={"query": query},
     )
     return {"query": query, "results": []}
+
+
+@router.get("/{entry_id}", response_model=KnowledgeEntryResponse)
+async def get_knowledge_entry(
+    entry_id: str,
+    user: dict = Depends(require_auth("knowledge", "read")),
+):
+    """Get a specific knowledge base entry."""
+    entry = None
+    if not entry:
+        raise HTTPException(status_code=404, detail=f"Knowledge entry {entry_id} not found")
+    audit_logger.log_event(
+        event_type="api_call",
+        user_id=user.get("user_id"),
+        resource_type="knowledge",
+        resource_id=entry_id,
+        action="get",
+        outcome="success",
+    )
+    return entry

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useApi } from '../hooks/useApi'
-import LoadingSkeleton from '../components/ux/LoadingSkeleton'
 import EmptyState from '../components/ux/EmptyState'
 import ErrorAlert from '../components/ux/ErrorAlert'
 
@@ -24,6 +23,16 @@ interface DriftSource {
   type: string
   status: string
   last_checked: string
+}
+
+interface DriftListResponse {
+  drifts: DriftEvent[]
+  total: number
+}
+
+interface DriftSourceListResponse {
+  sources: DriftSource[]
+  total: number
 }
 
 function SeverityIndicator({ confidence }: { confidence: number }) {
@@ -70,17 +79,17 @@ function StateDiff({
 
 
 export default function ConfigDriftView() {
-  const { data: drifts, loading: driftsLoading, error: driftsError, refetch } =
-    useApi<DriftEvent[]>('/api/v1/config-drift/')
-  const { data: sources, loading: sourcesLoading, error: sourcesError } =
-    useApi<DriftSource[]>('/api/v1/config-drift/sources')
+  const { data: driftData, loading: driftsLoading, error: driftsError, refetch } =
+    useApi<DriftListResponse>('/api/v1/config-drift/')
+  const { data: sourceData, loading: sourcesLoading, error: sourcesError } =
+    useApi<DriftSourceListResponse>('/api/v1/config-drift/sources')
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [remediating, setRemediating] = useState<string | null>(null)
   const [remediateError, setRemediateError] = useState<string | null>(null)
 
-  const driftList = drifts ?? []
-  const sourceList = sources ?? []
+  const driftList = driftData?.drifts ?? []
+  const sourceList = sourceData?.sources ?? []
 
   const handleRemediate = async (driftId: string) => {
     setRemediating(driftId)

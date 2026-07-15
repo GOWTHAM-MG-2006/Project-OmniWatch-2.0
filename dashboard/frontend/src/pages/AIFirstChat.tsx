@@ -301,5 +301,5 @@ The NQL engine is processing your request. Here's a simulated response:
 - Searching across metrics, logs, and traces
 - No matching anomalies found in the last 24 hours
 
-**Note:** This is a simulated response. The full NQL engine integration is pending.`,
+**Note:** This is a simulated response. The full NQL engine integration is pending.`
 }

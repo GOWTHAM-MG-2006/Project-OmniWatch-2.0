@@ -410,6 +410,8 @@ Layer 11: NexusUX (Dashboard)
 
 **No circular dependency errors. Logically consistent.**
 
+> **Note:** The JSON schemas in this document are simplified overviews. Canonical data contract definitions (AnomalySignal, RootCauseObject, IncidentRecord, SimulaXResult, ActionResult, ConfigDriftEvent, SecurityAnomalySignal) are defined in `AGENTS.md` under "Key Data Contracts."
+
 ---
 
 *Document Version: 2.0 | Generated: July 2026*

@@ -39,7 +39,7 @@ class MTTRReportResponse(BaseModel):
     period: str
 
 
-# ─── Endpoints ─────────────────────────────────────────────────────
+# ─── Endpoints (static routes BEFORE parameterized routes) ─────────
 
 @router.get("/", response_model=ReportListResponse)
 async def list_reports(
@@ -59,25 +59,20 @@ async def list_reports(
     return {"reports": [], "total": 0}
 
 
-@router.get("/{report_id}", response_model=ReportResponse)
-async def get_report(
-    report_id: str,
+@router.get("/mttr", response_model=MTTRReportResponse)
+async def get_mttr_report(
     user: dict = Depends(require_auth("reports", "read")),
 ):
-    """Get a specific report."""
-    # TODO: Replace with real database lookup
-    report = None  # db.get_report(report_id)
-    if not report:
-        raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
+    """Get Mean Time to Resolution report."""
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
         resource_type="report",
-        resource_id=report_id,
-        action="get",
+        resource_id=None,
+        action="mttr",
         outcome="success",
     )
-    return report
+    return data_service.get_mttr()
 
 
 @router.post("/compliance", response_model=ReportResponse, status_code=202)
@@ -103,17 +98,21 @@ async def generate_compliance_report(
     return {"report_id": "RPT-NEW", "status": "generating"}
 
 
-@router.get("/mttr", response_model=MTTRReportResponse)
-async def get_mttr_report(
+@router.get("/{report_id}", response_model=ReportResponse)
+async def get_report(
+    report_id: str,
     user: dict = Depends(require_auth("reports", "read")),
 ):
-    """Get Mean Time to Resolution report."""
+    """Get a specific report."""
+    report = None
+    if not report:
+        raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
         resource_type="report",
-        resource_id=None,
-        action="mttr",
+        resource_id=report_id,
+        action="get",
         outcome="success",
     )
-    return data_service.get_mttr()
+    return report

@@ -43,7 +43,7 @@ class SimulationModesResponse(BaseModel):
     modes: List[str]
 
 
-# ─── Endpoints ─────────────────────────────────────────────────────
+# ─── Endpoints (static routes BEFORE parameterized routes) ─────────
 
 @router.get("/", response_model=SimulationListResponse)
 async def list_simulations(
@@ -64,25 +64,20 @@ async def list_simulations(
     return {"simulations": simulations, "total": len(simulations)}
 
 
-@router.get("/{simulation_id}", response_model=SimulationResponse)
-async def get_simulation(
-    simulation_id: str,
+@router.get("/modes", response_model=SimulationModesResponse)
+async def list_simulation_modes(
     user: dict = Depends(require_auth("simulations", "read")),
 ):
-    """Get a specific simulation result."""
-    # TODO: Replace with real database lookup
-    simulation = None  # db.get_simulation(simulation_id)
-    if not simulation:
-        raise HTTPException(status_code=404, detail=f"Simulation {simulation_id} not found")
+    """List available simulation modes."""
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
         resource_type="simulation",
-        resource_id=simulation_id,
-        action="get",
+        resource_id=None,
+        action="modes",
         outcome="success",
     )
-    return simulation
+    return {"modes": ["REMEDIATION_SIMULATION", "CAPACITY_SIMULATION", "DEPLOYMENT_SIMULATION", "CHAOS_SIMULATION"]}
 
 
 @router.post("/", response_model=SimulationResponse, status_code=202)
@@ -113,17 +108,21 @@ async def run_simulation(
     return result
 
 
-@router.get("/modes", response_model=SimulationModesResponse)
-async def list_simulation_modes(
+@router.get("/{simulation_id}", response_model=SimulationResponse)
+async def get_simulation(
+    simulation_id: str,
     user: dict = Depends(require_auth("simulations", "read")),
 ):
-    """List available simulation modes."""
+    """Get a specific simulation result."""
+    simulation = None
+    if not simulation:
+        raise HTTPException(status_code=404, detail=f"Simulation {simulation_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
         resource_type="simulation",
-        resource_id=None,
-        action="modes",
+        resource_id=simulation_id,
+        action="get",
         outcome="success",
     )
-    return {"modes": ["REMEDIATION_SIMULATION", "CAPACITY_SIMULATION", "DEPLOYMENT_SIMULATION", "CHAOS_SIMULATION"]}
+    return simulation

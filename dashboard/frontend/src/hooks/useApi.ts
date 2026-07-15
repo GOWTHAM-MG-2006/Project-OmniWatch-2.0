@@ -24,6 +24,10 @@ export function useApi<T>(url: string, options: UseApiOptions = {}): UseApiResul
   const [loading, setLoading] = useState(immediate)
   const [error, setError] = useState<string | null>(null)
   const mountedRef = useRef(true)
+  const optionsRef = useRef(fetchOptions)
+
+  // Keep ref in sync with latest options
+  optionsRef.current = fetchOptions
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -33,9 +37,9 @@ export function useApi<T>(url: string, options: UseApiOptions = {}): UseApiResul
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...((fetchOptions.headers as Record<string, string>) ?? {}),
+        ...((optionsRef.current.headers as Record<string, string>) ?? {}),
       }
-      const res = await fetch(url, { ...fetchOptions, headers })
+      const res = await fetch(url, { ...optionsRef.current, headers })
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`)
       }
@@ -52,7 +56,7 @@ export function useApi<T>(url: string, options: UseApiOptions = {}): UseApiResul
         setLoading(false)
       }
     }
-  }, [url, fetchOptions])
+  }, [url]) // Only depend on url — options accessed via ref
 
   useEffect(() => {
     mountedRef.current = true

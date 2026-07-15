@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useApi, useWebSocket } from '../hooks'
-import LoadingSkeleton from '../components/ux/LoadingSkeleton'
 import EmptyState from '../components/ux/EmptyState'
 import ErrorAlert from '../components/ux/ErrorAlert'
 import MetricCard from '../components/ux/MetricCard'
@@ -22,6 +21,11 @@ interface LayerInfo {
   latency_ms?: number
 }
 
+interface IncidentResponse {
+  incidents: Incident[]
+  total: number
+}
+
 interface SystemStatus {
   health: string
   layers: Record<string, LayerInfo>
@@ -32,8 +36,8 @@ interface SystemStatus {
 
 
 export default function SREMode() {
-  const { data: incidents, loading: incLoading, error: incError, refetch: refetchIncidents } =
-    useApi<Incident[]>('/api/v1/incidents/')
+  const { data: incidentData, loading: incLoading, error: incError, refetch: refetchIncidents } =
+    useApi<IncidentResponse>('/api/v1/incidents/')
   const { data: status, loading: statusLoading, error: statusError, refetch: refetchStatus } =
     useApi<SystemStatus>('/api/v1/status')
   const { connected } = useWebSocket('ws://localhost:8000/ws')
@@ -88,7 +92,7 @@ export default function SREMode() {
     )
   }
 
-  const incidentList = incidents ?? []
+  const incidentList = incidentData?.incidents ?? []
   const activeIncidents = incidentList.filter((inc: Incident) => inc.status === 'OPEN')
   const p1Count = activeIncidents.filter((inc: Incident) => inc.severity?.toUpperCase() === 'P1').length
   const p2Count = activeIncidents.filter((inc: Incident) => inc.severity?.toUpperCase() === 'P2').length

@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useApi } from '../hooks/useApi'
-import LoadingSkeleton from '../components/ux/LoadingSkeleton'
 import EmptyState from '../components/ux/EmptyState'
 import ErrorAlert from '../components/ux/ErrorAlert'
-import StatusBadge from '../components/ux/StatusBadge'
+import StatusDot from '../components/ux/StatusDot'
 
 interface ServiceNode {
   id: string

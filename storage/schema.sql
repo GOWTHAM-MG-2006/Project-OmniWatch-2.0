@@ -271,3 +271,67 @@ CREATE TABLE IF NOT EXISTS omniwatch.regions
 ENGINE = MergeTree()
 ORDER BY region_id
 SETTINGS index_granularity = 8192;
+
+-- ─── SLO Targets ────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS omniwatch.slo_targets
+(
+    entity_id               String,
+    slo_name                String,
+    target_value            Float64,
+    current_value           Float64,
+    breach                  Boolean DEFAULT false,
+    error_budget_remaining  Float64 DEFAULT 100.0,
+    timestamp               DateTime64(3, 'UTC')
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (entity_id, slo_name, timestamp);
+
+-- ─── Deployments ────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS omniwatch.deployments
+(
+    deployment_id   String,
+    service_name    String,
+    version         String,
+    commit_sha      String DEFAULT '',
+    deployed_at     DateTime64(3, 'UTC'),
+    deployed_by     String DEFAULT 'system',
+    status          LowCardinality(String) DEFAULT 'success'
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(deployed_at)
+ORDER BY (service_name, deployed_at);
+
+-- ─── Security Events ────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS omniwatch.security_events
+(
+    event_id        String,
+    attack_type     String,
+    entity_id       String,
+    severity        LowCardinality(String),
+    confidence      Float64,
+    source_ip       String DEFAULT '',
+    recommended_action String DEFAULT '',
+    timestamp       DateTime64(3, 'UTC')
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (entity_id, attack_type, timestamp);
+
+-- ─── Vulnerabilities ────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS omniwatch.vulnerabilities
+(
+    vulnerability_id    String,
+    entity_id           String,
+    cve_id              String,
+    severity            LowCardinality(String),
+    cvss_score          Float64 DEFAULT 0.0,
+    affected_package    String DEFAULT '',
+    reachability        String DEFAULT 'unknown',
+    remediation         String DEFAULT '',
+    fixed               Boolean DEFAULT false,
+    timestamp           DateTime64(3, 'UTC')
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (entity_id, severity, timestamp);

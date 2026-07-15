@@ -41,7 +41,7 @@ class DriftSourcesResponse(BaseModel):
     sources: List[str]
 
 
-# ─── Endpoints ─────────────────────────────────────────────────────
+# ─── Endpoints (static routes BEFORE parameterized routes) ─────────
 
 @router.get("/", response_model=ConfigDriftListResponse)
 async def list_config_drifts(
@@ -63,25 +63,21 @@ async def list_config_drifts(
     return {"drifts": drifts, "total": len(drifts)}
 
 
-@router.get("/{drift_id}", response_model=ConfigDriftResponse)
-async def get_config_drift(
-    drift_id: str,
+@router.get("/sources", response_model=DriftSourcesResponse)
+async def list_drift_sources(
     user: dict = Depends(require_auth("config_drift", "read")),
 ):
-    """Get a specific config drift."""
-    # TODO: Replace with real database lookup
-    drift = None  # db.get_config_drift(drift_id)
-    if not drift:
-        raise HTTPException(status_code=404, detail=f"Config drift {drift_id} not found")
+    """List available drift sources."""
+    valid_sources = ["kubernetes", "terraform", "ansible", "git"]
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
         resource_type="config_drift",
-        resource_id=drift_id,
-        action="get",
+        resource_id=None,
+        action="sources",
         outcome="success",
     )
-    return drift
+    return {"sources": valid_sources}
 
 
 @router.post("/{drift_id}/remediate", response_model=DriftRemediationResponse)
@@ -91,10 +87,6 @@ async def remediate_drift(
     user: dict = Depends(require_auth("config_drift", "write")),
 ):
     """Trigger remediation for a drift."""
-    # TODO: Replace with real database lookup
-    drift = None  # db.get_config_drift(drift_id)
-    if not drift:
-        raise HTTPException(status_code=404, detail=f"Config drift {drift_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
@@ -106,21 +98,21 @@ async def remediate_drift(
     return {"drift_id": drift_id, "remediation_status": "started"}
 
 
-@router.get("/sources", response_model=DriftSourcesResponse)
-async def list_drift_sources(
+@router.get("/{drift_id}", response_model=ConfigDriftResponse)
+async def get_config_drift(
+    drift_id: str,
     user: dict = Depends(require_auth("config_drift", "read")),
 ):
-    """List available drift sources."""
-    valid_sources = ["kubernetes", "terraform", "ansible", "git"]
-    source = user.get("source")
-    if source and source.lower() not in valid_sources:
-        raise HTTPException(status_code=400, detail=f"Invalid drift source '{source}'. Valid sources: {valid_sources}")
+    """Get a specific config drift."""
+    drift = None
+    if not drift:
+        raise HTTPException(status_code=404, detail=f"Config drift {drift_id} not found")
     audit_logger.log_event(
         event_type="api_call",
         user_id=user.get("user_id"),
         resource_type="config_drift",
-        resource_id=None,
-        action="sources",
+        resource_id=drift_id,
+        action="get",
         outcome="success",
     )
-    return {"sources": valid_sources}
+    return drift

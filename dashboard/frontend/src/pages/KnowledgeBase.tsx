@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useApi } from '../hooks/useApi'
-import LoadingSkeleton from '../components/ux/LoadingSkeleton'
 import EmptyState from '../components/ux/EmptyState'
 import ErrorAlert from '../components/ux/ErrorAlert'
 
@@ -14,6 +13,11 @@ interface KnowledgeEntry {
   resolution_time_minutes?: number
   created_at: string
   tags?: string[]
+}
+
+interface KnowledgeListResponse {
+  entries: KnowledgeEntry[]
+  total: number
 }
 
 function ConfidenceBar({ score }: { score: number }) {
@@ -35,11 +39,11 @@ function ConfidenceBar({ score }: { score: number }) {
 
 
 export default function KnowledgeBase() {
-  const { data: entries, loading, error } = useApi<KnowledgeEntry[]>('/api/v1/knowledge/')
+  const { data: kbData, loading, error } = useApi<KnowledgeListResponse>('/api/v1/knowledge/')
   const [search, setSearch] = useState('')
 
   const filtered = useMemo(() => {
-    const list = entries ?? []
+    const list = kbData?.entries ?? []
     if (!search.trim()) return list
     const q = search.toLowerCase()
     return list.filter(
@@ -49,7 +53,7 @@ export default function KnowledgeBase() {
         e.resolution.toLowerCase().includes(q) ||
         (e.tags ?? []).some((t) => t.toLowerCase().includes(q)),
     )
-  }, [entries, search])
+  }, [kbData, search])
 
   if (loading) {
     return (
@@ -99,7 +103,7 @@ export default function KnowledgeBase() {
       <div className="flex items-center gap-4 text-sm text-gray-400">
         <span>
           Showing <span className="text-gray-100 font-medium">{filtered.length}</span> of{' '}
-          {(entries ?? []).length} entries
+          {(kbData?.entries ?? []).length} entries
         </span>
       </div>
 

@@ -49,11 +49,17 @@ class KnowledgeBase:
         if self._minio_client is None:
             try:
                 from minio import Minio
+                access_key = os.environ.get("MINIO_ACCESS_KEY")
+                secret_key = os.environ.get("MINIO_SECRET_KEY")
+                if not access_key or not secret_key:
+                    logger.warning("MINIO_ACCESS_KEY/MINIO_SECRET_KEY not set; MinIO unavailable")
+                    self._minio_client = False
+                    return self._minio_client
                 self._minio_client = Minio(
                     self.minio_endpoint,
-                    access_key=os.getenv("MINIO_ACCESS_KEY", "minioadmin"),
-                    secret_key=os.getenv("MINIO_SECRET_KEY", "minioadmin"),
-                    secure=False,
+                    access_key=access_key,
+                    secret_key=secret_key,
+                    secure=os.getenv("MINIO_SECURE", "false").lower() == "true",
                 )
             except Exception as e:
                 logger.warning("MinIO unavailable: %s", e)

@@ -1,5 +1,4 @@
 import { useApi } from '../hooks/useApi'
-import LoadingSkeleton from '../components/ux/LoadingSkeleton'
 import EmptyState from '../components/ux/EmptyState'
 import ErrorAlert from '../components/ux/ErrorAlert'
 import MetricCard from '../components/ux/MetricCard'
@@ -32,6 +31,16 @@ interface CSPMStatus {
   passed_checks?: number
   failed_checks?: number
   categories?: Record<string, { passed: number; total: number }>
+}
+
+interface SecurityEventListResponse {
+  events: SecurityEvent[]
+  total: number
+}
+
+interface VulnerabilityListResponse {
+  vulnerabilities: Vulnerability[]
+  total: number
 }
 
 
@@ -69,10 +78,10 @@ function VulnMatrix({ vulns }: { vulns: Vulnerability[] }) {
 }
 
 export default function SecurityMode() {
-  const { data: eventsData, loading: eventsLoading, error: eventsError } = useApi<SecurityEvent[]>(
+  const { data: eventData, loading: eventsLoading, error: eventsError } = useApi<SecurityEventListResponse>(
     '/api/v1/security/events'
   )
-  const { data: vulnsData, loading: vulnsLoading, error: vulnsError } = useApi<Vulnerability[]>(
+  const { data: vulnData, loading: vulnsLoading, error: vulnsError } = useApi<VulnerabilityListResponse>(
     '/api/v1/security/vulnerabilities'
   )
   const { data: cspmData, loading: cspmLoading, error: cspmError } = useApi<CSPMStatus>(
@@ -112,8 +121,8 @@ export default function SecurityMode() {
     )
   }
 
-  const events: SecurityEvent[] = eventsData ?? []
-  const vulns: Vulnerability[] = vulnsData ?? []
+  const events: SecurityEvent[] = eventData?.events ?? []
+  const vulns: Vulnerability[] = vulnData?.vulnerabilities ?? []
   const cspm: CSPMStatus = cspmData ?? {}
 
   const criticalCVEs = vulns.filter((v) => v.severity?.toLowerCase() === 'critical').length

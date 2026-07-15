@@ -602,5 +602,533 @@
     "query_latency_ms": -1,
     "api_latency_ms": -1,
     "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T05:31:35.658749+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "Error HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /?query_id=45aef796-d8aa-42a4-af28-ade07073bf52 (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=9000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")) executing HTTP request attempt 1 (http://localhost:9000)"
+    },
+    "api": {
+      "available": false,
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": -1,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T05:31:47.913976+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "Error HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /?query_id=ec948738-d327-4815-acd3-ae79b649f5f2 (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=9000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")) executing HTTP request attempt 1 (http://localhost:9000)"
+    },
+    "api": {
+      "available": false,
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": -1,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T05:33:39.320239+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "Error HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /?query_id=38f6f6cf-aefa-48a2-a14d-968d9c6e2b1f (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=9000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")) executing HTTP request attempt 1 (http://localhost:9000)"
+    },
+    "api": {
+      "available": false,
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": -1,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T05:33:51.477875+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "Error HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /?query_id=f9a14dd4-4b49-4e11-9b6b-576b8811b41f (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=9000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")) executing HTTP request attempt 1 (http://localhost:9000)"
+    },
+    "api": {
+      "available": false,
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": -1,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T05:59:58.728789+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "Error HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /?query_id=151d117f-652a-46e6-86dc-e65a200bf4a3 (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=9000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")) executing HTTP request attempt 1 (http://localhost:9000)"
+    },
+    "api": {
+      "available": false,
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": -1,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T06:00:11.019349+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "Error HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /?query_id=28c0b681-ef8d-437a-9128-19b879c1c831 (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=9000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")) executing HTTP request attempt 1 (http://localhost:9000)"
+    },
+    "api": {
+      "available": false,
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": -1,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T06:04:33.917369+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "Error HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /?query_id=51b566e0-82c0-4dbe-a28c-d8dc18bc0926 (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=9000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")) executing HTTP request attempt 1 (http://localhost:9000)"
+    },
+    "api": {
+      "available": false,
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": -1,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T06:04:46.260772+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "Error HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /?query_id=6bbe0e76-f7aa-4922-8a1a-84483d3449f9 (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=9000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")) executing HTTP request attempt 1 (http://localhost:9000)"
+    },
+    "api": {
+      "available": false,
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": -1,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T06:15:28.736219+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "Error HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /?query_id=dd0bfffd-11d0-4079-b12b-caaf83f004ae (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=9000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")) executing HTTP request attempt 1 (http://localhost:9000)"
+    },
+    "api": {
+      "available": false,
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": -1,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T06:15:41.046592+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "Error HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /?query_id=8ef20f4d-2958-4939-87b5-fc15f456cba1 (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=9000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")) executing HTTP request attempt 1 (http://localhost:9000)"
+    },
+    "api": {
+      "available": false,
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": -1,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T08:58:51.096741+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": true,
+      "status_code": 200,
+      "avg_ms": 8.41,
+      "min_ms": 6.8,
+      "max_ms": 10.95,
+      "samples": 5
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": 8.41,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T08:58:51.174669+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": true,
+      "status_code": 200,
+      "avg_ms": 8.87,
+      "min_ms": 3.48,
+      "max_ms": 16.33,
+      "samples": 5
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": 8.87,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T09:28:01.921855+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": true,
+      "status_code": 200,
+      "avg_ms": 14.67,
+      "min_ms": 3.22,
+      "max_ms": 26.98,
+      "samples": 5
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": 14.67,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T09:28:02.024090+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": true,
+      "status_code": 200,
+      "avg_ms": 13.8,
+      "min_ms": 4.02,
+      "max_ms": 28.63,
+      "samples": 5
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": 13.8,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T10:05:42.621679+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": true,
+      "status_code": 200,
+      "avg_ms": 10.49,
+      "min_ms": 4.87,
+      "max_ms": 23.7,
+      "samples": 5
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": 10.49,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T10:05:42.696331+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": true,
+      "status_code": 200,
+      "avg_ms": 13.98,
+      "min_ms": 3.77,
+      "max_ms": 27.09,
+      "samples": 5
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": 13.98,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T10:07:20.486185+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": true,
+      "status_code": 200,
+      "avg_ms": 15.02,
+      "min_ms": 5.15,
+      "max_ms": 25.68,
+      "samples": 5
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": 15.02,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T10:07:20.585918+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": true,
+      "status_code": 200,
+      "avg_ms": 13.9,
+      "min_ms": 4.93,
+      "max_ms": 27.75,
+      "samples": 5
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": 13.9,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T13:48:07.507154+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": false,
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)"
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": -1,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T13:48:12.561429+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": true,
+      "status_code": 200,
+      "avg_ms": 14.63,
+      "min_ms": 3.62,
+      "max_ms": 26.04,
+      "samples": 5
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": 14.63,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T14:32:43.523830+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": true,
+      "status_code": 200,
+      "avg_ms": 13.62,
+      "min_ms": 5.0,
+      "max_ms": 22.61,
+      "samples": 5
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": 13.62,
+    "memory_usage_gb": -1
+  },
+  {
+    "timestamp": "2026-07-12T14:32:43.638925+00:00",
+    "clickhouse": {
+      "available": false,
+      "error": "HTTP driver received HTTP status 400, server response: Port 9000 is for clickhouse-client program\r\nYou must use port 8123 for HTTP. (for url http://localhost:9000)"
+    },
+    "api": {
+      "available": true,
+      "status_code": 200,
+      "avg_ms": 12.82,
+      "min_ms": 4.37,
+      "max_ms": 25.87,
+      "samples": 5
+    },
+    "memory": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "resources": {
+      "available": false,
+      "error": "psutil not installed"
+    },
+    "query_latency_ms": -1,
+    "api_latency_ms": 12.82,
+    "memory_usage_gb": -1
   }
 ]

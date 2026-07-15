@@ -5,7 +5,7 @@ interface LineChartProps {
   height?: number
 }
 
-export default function LineChart({ data, title, color = '#22d3ee', height = 200 }: LineChartProps) {
+export default function LineChart({ data, title, color = '#22d3ee' }: LineChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">

@@ -1,15 +1,8 @@
 import { useState } from 'react'
 import { useApi, useApiPost } from '../hooks/useApi'
-import LoadingSkeleton from '../components/ux/LoadingSkeleton'
 import EmptyState from '../components/ux/EmptyState'
 import ErrorAlert from '../components/ux/ErrorAlert'
 import StatusBadge from '../components/ux/StatusBadge'
-
-interface SimulationMode {
-  id: string
-  name: string
-  description: string
-}
 
 interface Simulation {
   simulation_id: string
@@ -41,29 +34,40 @@ interface SimulationResponse {
   recommendation?: string
 }
 
+interface SimulationListResponse {
+  simulations: Simulation[]
+  total: number
+}
 
+interface SimulationModesResponse {
+  modes: string[]
+}
+
+const DEFAULT_MODES = [
+  { id: 'REMEDIATION_SIMULATION', name: 'Remediation Simulation', description: 'Simulate proposed fixes' },
+  { id: 'CAPACITY_SIMULATION', name: 'Capacity Simulation', description: 'Simulate traffic growth' },
+  { id: 'DEPLOYMENT_SIMULATION', name: 'Deployment Simulation', description: 'Simulate deployment rollout' },
+  { id: 'CHAOS_SIMULATION', name: 'Chaos Simulation', description: 'Simulate failure injection' },
+]
 
 export default function SimulaXDashboard() {
-  const { data: modes, loading: modesLoading, error: modesError } =
-    useApi<SimulationMode[]>('/api/v1/simulations/modes')
-  const { data: simulations, loading: simsLoading, error: simsError, refetch } =
-    useApi<Simulation[]>('/api/v1/simulations/')
+  const { data: modesData, loading: modesLoading, error: modesError } =
+    useApi<SimulationModesResponse>('/api/v1/simulations/modes')
+  const { data: simData, loading: simsLoading, error: simsError, refetch } =
+    useApi<SimulationListResponse>('/api/v1/simulations/')
   const { loading: postLoading, error: postError, execute: runSimulation } =
     useApiPost<SimulationResponse, SimulationRequest>('/api/v1/simulations/')
 
   const [selectedMode, setSelectedMode] = useState('')
   const [incidentId, setIncidentId] = useState('')
   const [customParams, setCustomParams] = useState('')
-  const [lastResult, setLastResult] = useState<SimulationResponse | null>(null)
+  const [lastResult] = useState<SimulationResponse | null>(null)
 
-  const modeList = modes ?? [
-    { id: 'REMEDIATION_SIMULATION', name: 'Remediation Simulation', description: 'Simulate proposed fixes' },
-    { id: 'CAPACITY_SIMULATION', name: 'Capacity Simulation', description: 'Simulate traffic growth' },
-    { id: 'DEPLOYMENT_SIMULATION', name: 'Deployment Simulation', description: 'Simulate deployment rollout' },
-    { id: 'CHAOS_SIMULATION', name: 'Chaos Simulation', description: 'Simulate failure injection' },
-  ]
+  const modeList = modesData?.modes
+    ? modesData.modes.map(m => DEFAULT_MODES.find(d => d.id === m) ?? { id: m, name: m, description: '' })
+    : DEFAULT_MODES
 
-  const simList = simulations ?? []
+  const simList = simData?.simulations ?? []
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

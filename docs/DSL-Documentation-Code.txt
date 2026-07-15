@@ -45,7 +45,7 @@ workspace "OmniWatch" "AI-Driven Cloud Ops Platform v2.0" {
                 bytecodeInject = component "Runtime Bytecode Injection" "JVMTI, CLR Profiling API, V8 hooks for JVM/.NET/Node.js"                    "Go"
                 otelReceiver  = component "OTLP Receiver"             "OTLP/gRPC + HTTP receiver with full OTel semantic conventions"                "OpenTelemetry"
                 cloudApiPoll  = component "Cloud API Polling"         "AWS/Azure/GCP APIs, K8s Watch, Cost APIs, Carbon APIs"                       "Go"
-                rumAgent      = component "RUM Agent"                 "Auto-injected JS snippet, mobile SDKs, Session Replay"                       "JavaScript"
+                rumAgent      = component "RUM Agent"                 "Auto-injected JS snippet, browser SDKs, Session Replay"                    "JavaScript"
                 llmObserver   = component "LLM Observability"         "Auto-discovers LangChain, LlamaIndex; tracks tokens, cost, latency"          "Go"
                 edgeProcessor = component "In-Agent Edge Processor"   "eBPF maps for in-kernel aggregation, only anomalous spans exported"          "Rust"
                 watchdog      = component "Self-Healing Watchdog"     "Health monitor, auto-restart, CPU budget enforcer"                           "Go"
@@ -92,7 +92,7 @@ workspace "OmniWatch" "AI-Driven Cloud Ops Platform v2.0" {
                 hotStore   = component "Hot Store"     "In-memory columnar store (Apache Arrow), last 2-6 hours, all anomalous signals"   "Apache Arrow"
                 warmStore  = component "Warm Store"    "ClickHouse cluster, last 90 days, sub-second aggregation"                        "ClickHouse"
                 coldStore  = component "Cold Store"    "Parquet + Iceberg on S3/GCS, petabyte-scale, time-travel queries"                "Apache Parquet, Iceberg"
-                graphStore = component "Graph Store"   "Apache Kuzu / NebulaGraph, entity nodes, dependency edges"                       "Apache Kuzu"
+                graphStore = component "Graph Store"   "Apache Kuzu, entity nodes, dependency edges"                       "Apache Kuzu"
                 nqlEngine  = component "NQL Engine"    "Unified query language (superset of PromQL + LogQL + SQL)"                       "Go"
 
                 hotStore   -> warmStore   "TTL-based migration"
@@ -107,7 +107,7 @@ workspace "OmniWatch" "AI-Driven Cloud Ops Platform v2.0" {
             topoBrain = container "TopoBrain" "8-layer causal knowledge graph with <500ms update latency" "Apache Kuzu, Flink, Python" {
                 tags "TopologyLayer"
 
-                graphDatabase    = component "Graph Database"       "Apache Kuzu / NebulaGraph storing entity nodes and dependency edges"     "Apache Kuzu"
+                graphDatabase    = component "Graph Database"       "Apache Kuzu storing entity nodes and dependency edges"     "Apache Kuzu"
                 topologyProcessor = component "Topology Processor"  "Processes topology deltas, creates/updates/expires edges"                "Flink"
                 entityRegistry   = component "Entity Registry"      "Redis cache for sub-ms entity lookup + ClickHouse for history"           "Redis, ClickHouse"
                 driftDetector    = component "Topology Drift Detector" "Compares runtime topology vs. declared architecture"                    "Python"

@@ -4,7 +4,7 @@ interface BarChartProps {
   height?: number
 }
 
-export default function BarChart({ data, title, height = 200 }: BarChartProps) {
+export default function BarChart({ data, title }: BarChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">

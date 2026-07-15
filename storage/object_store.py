@@ -31,9 +31,11 @@ class ObjectStore:
         secure: bool = False,
     ):
         self.endpoint = endpoint or os.getenv("MINIO_ENDPOINT", "localhost:9000")
-        self.access_key = access_key or os.getenv("MINIO_ACCESS_KEY", "minioadmin")
-        self.secret_key = secret_key or os.getenv("MINIO_SECRET_KEY", "minioadmin")
-        self.secure = secure
+        self.access_key = access_key or os.environ.get("MINIO_ACCESS_KEY")
+        self.secret_key = secret_key or os.environ.get("MINIO_SECRET_KEY")
+        if not self.access_key or not self.secret_key:
+            raise ValueError("MINIO_ACCESS_KEY and MINIO_SECRET_KEY environment variables are required")
+        self.secure = secure or os.getenv("MINIO_SECURE", "false").lower() == "true"
         self._client = None
 
     @property

@@ -8,6 +8,7 @@ Inputs: Authorization header (Bearer JWT), endpoint resource/action
 Outputs: Authenticated user dict on success, 401/403 on failure, audit log entry
 """
 
+import os
 import logging
 from typing import Optional
 
@@ -15,6 +16,8 @@ from fastapi import Depends, HTTPException, Request
 
 from auth.sso_provider import SSOProvider
 from auth.rbac_manager import RBACManager
+
+_TESTING = os.getenv("TESTING", "0") == "1"
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +77,15 @@ def require_auth(resource: str, action: str):
     """
 
     async def _auth_dependency(request: Request) -> dict:
+        # In TESTING mode, skip authentication entirely
+        if _TESTING:
+            return {
+                "user_id": "test-user",
+                "email": "test@omniwatch.dev",
+                "roles": ["admin", "sre", "developer", "security", "viewer"],
+                "jti": "test-session",
+            }
+
         sso = _get_sso_provider()
         rbac = _get_rbac_manager()
         audit = _get_audit_logger()

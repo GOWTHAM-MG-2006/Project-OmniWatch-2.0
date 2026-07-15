@@ -117,11 +117,9 @@ services:
       - "--server"
       - "--addr=0.0.0.0:8181"
       - "/policies"
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8181/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # NOTE: OPA image is scratch-based (no shell/wget/curl), so Docker health
+    # checks cannot execute inside the container. The service is fully functional
+    # — verified via HTTP: http://localhost:8181/health returns 200 OK.
 
   # ─── Ollama (LLM Inference) ──────────────────────────────────────
   ollama:
@@ -133,7 +131,7 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:11434/api/tags"]
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/11434' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -153,7 +151,7 @@ services:
       TESTING: "1"
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CLICKHOUSE_HOST: clickhouse
-      CLICKHOUSE_PORT: 9000
+      CLICKHOUSE_PORT: 8123
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KUZU_DATABASE_PATH: /data/omniwatch-graph

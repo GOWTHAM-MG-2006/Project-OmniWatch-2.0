@@ -4,6 +4,7 @@ import os
 import logging
 import time
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ class SimulaXService:
                 "recovery_time_minutes": recovery_minutes,
                 "side_effects": side_effects,
             },
-            "created_at": time.time(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def run_capacity_sim(self, scenario: dict) -> dict:
@@ -74,7 +75,7 @@ class SimulaXService:
                 "network": min(100, 30 * growth),
             },
             "recommendation": "SCALE_UP" if growth > 1.5 else "OK",
-            "created_at": time.time(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def run_deployment_sim(self, scenario: dict) -> dict:
@@ -89,7 +90,7 @@ class SimulaXService:
             "predicted_downtime_seconds": 0 if strategy == "rolling" else 30,
             "rollback_confidence": 0.95,
             "recommendation": "PROCEED",
-            "created_at": time.time(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def run_chaos_sim(self, scenario: dict) -> dict:
@@ -107,5 +108,5 @@ class SimulaXService:
                 "recovery_time_minutes": 5,
             },
             "recommendation": "SAFE_TO_INJECT",
-            "created_at": time.time(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }

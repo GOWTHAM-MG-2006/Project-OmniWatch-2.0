@@ -45,9 +45,9 @@ class AuditLogger:
         event_type: str,
         user_id: str,
         resource_type: str,
-        resource_id: str,
         action: str,
         outcome: str,
+        resource_id: Optional[str] = None,
         ip_address: str = "",
         metadata: Optional[dict[str, Any]] = None,
     ) -> str:
@@ -74,14 +74,14 @@ class AuditLogger:
 
         row = [
             event_id,
-            event_type,
-            user_id,
-            resource_type,
-            resource_id,
-            action,
-            outcome,
-            metadata_json,
-            ip_address,
+            event_type or "",
+            user_id or "",
+            resource_type or "",
+            resource_id or "",
+            action or "",
+            outcome or "",
+            metadata_json or "{}",
+            ip_address or "",
             timestamp,
         ]
 

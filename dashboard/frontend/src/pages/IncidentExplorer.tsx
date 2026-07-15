@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useApi } from '../hooks'
-import LoadingSkeleton from '../components/ux/LoadingSkeleton'
 import EmptyState from '../components/ux/EmptyState'
 import ErrorAlert from '../components/ux/ErrorAlert'
 import SeverityBadge from '../components/ux/SeverityBadge'
@@ -31,10 +30,13 @@ interface Incident {
   assigned_to?: string
 }
 
-
+interface IncidentListResponse {
+  incidents: Incident[]
+  total: number
+}
 
 export default function IncidentExplorer() {
-  const { data: incidents, loading, error } = useApi<Incident[]>('/api/v1/incidents/')
+  const { data: incData, loading, error } = useApi<IncidentListResponse>('/api/v1/incidents/')
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   if (loading) {
@@ -58,7 +60,7 @@ export default function IncidentExplorer() {
     )
   }
 
-  const incidentList = incidents ?? []
+  const incidentList = incData?.incidents ?? []
   const selected = incidentList.find((inc: Incident) => inc.incident_id === selectedId) ?? null
 
   return (

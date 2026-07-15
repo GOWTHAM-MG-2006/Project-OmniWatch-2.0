@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { useApi } from '../hooks/useApi'
-import LoadingSkeleton from '../components/ux/LoadingSkeleton'
-import EmptyState from '../components/ux/EmptyState'
 import ErrorAlert from '../components/ux/ErrorAlert'
 
 interface Policy {
@@ -12,10 +10,13 @@ interface Policy {
   last_modified: string
 }
 
-
+interface PolicyListResponse {
+  policies: Policy[]
+  total: number
+}
 
 export default function PolicyManager() {
-  const { data: policies, loading, error } = useApi<Policy[]>('/api/v1/policies/')
+  const { data: policyData, loading, error } = useApi<PolicyListResponse>('/api/v1/policies/')
   const [selectedPolicy, setSelectedPolicy] = useState<string | null>(null)
   const [editorContent, setEditorContent] = useState(
     `# Example OPA Rego Policy
@@ -38,7 +39,7 @@ allow {
   )
   const [testResults, setTestResults] = useState<string | null>(null)
 
-  const policyList = policies ?? []
+  const policyList = policyData?.policies ?? []
 
   const handleRunTests = () => {
     setTestResults('Running policy tests...\n\n✓ remediation.rego: PASS (12/12 rules)\n✓ security.rego: PASS (8/8 rules)\n✓ config_drift.rego: PASS (5/5 rules)\n\nAll 25 test cases passed.')
