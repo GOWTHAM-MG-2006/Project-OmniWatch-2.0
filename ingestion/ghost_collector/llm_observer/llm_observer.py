@@ -19,6 +19,8 @@ from typing import Any
 
 import httpx
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 # Approximate cost per 1K tokens (USD) by model family
@@ -132,7 +134,7 @@ class LLMObserver:
         start = time.time()
 
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=config.LLM_HTTP_TIMEOUT) as client:
                 resp = await client.post(
                     f"{base_url.rstrip('/')}/chat/completions",
                     headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},

@@ -114,7 +114,7 @@ async def get_simulation(
     user: dict = Depends(require_auth("simulations", "read")),
 ):
     """Get a specific simulation result."""
-    simulation = None
+    simulation = data_service.get_simulation(simulation_id)
     if not simulation:
         raise HTTPException(status_code=404, detail=f"Simulation {simulation_id} not found")
     audit_logger.log_event(

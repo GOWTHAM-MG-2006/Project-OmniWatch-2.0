@@ -16,6 +16,8 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -90,21 +92,48 @@ class RemediationEngine:
             return {"success": False, "output": f"K8s action {action_type} not implemented"}
 
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=config.K8S_ACTION_TIMEOUT)
             if proc.returncode == 0:
                 return {"success": True, "output": proc.stdout.strip()}
             return {"success": False, "output": proc.stderr.strip(), "error": proc.stderr.strip()}
         except FileNotFoundError:
-            return {"success": True, "output": f"[MOCK] Would execute: {' '.join(cmd)}"}
+            return {"success": False, "output": f"kubectl not found", "error": "kubectl binary not available"}
         except subprocess.TimeoutExpired:
             return {"success": False, "output": "Command timed out", "error": "timeout"}
 
     def _execute_block_ip(self, action: dict[str, Any]) -> dict[str, Any]:
         """Block an IP address via network policy."""
         ip = action.get("parameters", {}).get("ip_address", "")
-        return {"success": True, "output": f"[MOCK] IP {ip} blocked via network policy"}
+        namespace = action.get("parameters", {}).get("namespace", "default")
+        cmd = ["kubectl", "exec", "-n", namespace, "-it", "network-policy-enforcer", "--", "iptables", "-A", "INPUT", "-s", ip, "-j", "DROP"]
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=config.KUBECTL_TIMEOUT)
+            return {"success": proc.returncode == 0, "output": proc.stdout.strip() if proc.returncode == 0 else proc.stderr.strip()}
+        except FileNotFoundError:
+            return {"success": False, "output": "kubectl not found", "error": "kubectl binary not available"}
+        except Exception as e:
+            return {"success": False, "output": str(e), "error": str(e)}
 
     def _execute_config_drift_fix(self, action: dict[str, Any]) -> dict[str, Any]:
-        """Execute config drift remediation."""
+        """Execute config drift remediation via the appropriate integrator."""
         drift_source = action.get("parameters", {}).get("drift_source", "")
-        return {"success": True, "output": f"[MOCK] Config drift fix triggered for {drift_source}"}
+        entity = action.get("parameters", {}).get("entity", "")
+
+        if drift_source == "kubernetes":
+            from remediation.config_drift.argocd_integrator import ArgoCDIntegrator
+            integrator = ArgoCDIntegrator()
+            return integrator.trigger_sync(entity, action.get("parameters", {}).get("app_name", entity))
+        elif drift_source == "os" or drift_source == "ansible":
+            from remediation.config_drift.ansible_integrator import AnsibleIntegrator
+            integrator = AnsibleIntegrator()
+            return integrator.trigger_playbook(entity)
+        elif drift_source == "cloud" or drift_source == "terraform":
+            from remediation.config_drift.terraform_integrator import TerraformIntegrator
+            integrator = TerraformIntegrator()
+            return integrator.trigger_reconciliation(entity)
+        elif drift_source == "git":
+            from remediation.config_drift.git_integrator import GitIntegrator
+            integrator = GitIntegrator()
+            return integrator.trigger_revert(entity)
+
+        return {"success": False, "output": f"Unknown drift source: {drift_source}", "error": "unsupported_drift_source"}

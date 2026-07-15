@@ -17,6 +17,8 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 COLD_DIR = Path("/tmp/omniwatch-cold")
@@ -30,7 +32,7 @@ class ParquetWriter:
         self.base_dir = Path(base_dir or os.getenv("OMNIWATCH_COLD_DIR", str(COLD_DIR)))
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
-        self.minio_endpoint = minio_endpoint or os.getenv("MINIO_ENDPOINT", "localhost:9001")
+        self.minio_endpoint = minio_endpoint or config.MINIO_ENDPOINT
         self.minio_access_key = minio_access_key or os.environ.get("MINIO_ACCESS_KEY")
         self.minio_secret_key = minio_secret_key or os.environ.get("MINIO_SECRET_KEY")
         if not self.minio_access_key or not self.minio_secret_key:

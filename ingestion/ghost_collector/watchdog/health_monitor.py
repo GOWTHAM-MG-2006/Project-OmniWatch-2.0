@@ -15,6 +15,8 @@ import time
 import random
 from typing import Any, Callable
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,10 +25,10 @@ class HealthMonitor:
 
     def __init__(
         self,
-        check_interval: float = 10.0,
-        max_backoff: float = 60.0,
-        cpu_budget_percent: float = 1.0,
-        memory_limit_mb: int = 512,
+        check_interval: float = config.WATCHDOG_CHECK_INTERVAL,
+        max_backoff: float = config.WATCHDOG_MAX_BACKOFF,
+        cpu_budget_percent: float = config.WATCHDOG_CPU_BUDGET,
+        memory_limit_mb: int = config.WATCHDOG_MEMORY_LIMIT_MB,
     ):
         self.check_interval = check_interval
         self.max_backoff = max_backoff

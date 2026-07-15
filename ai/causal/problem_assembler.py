@@ -18,8 +18,11 @@ class ProblemAssembler:
     """Groups related anomalies into single incidents (incident aggregation/deduplication)."""
 
     def __init__(self, time_window_seconds: int = 300):
+        import logging
+        logger = logging.getLogger(__name__)
         self.time_window_seconds = time_window_seconds
         self._mock_topology = self._build_mock_topology()
+        logger.warning("Using mock topology — connect to TopoBrain (Kuzu) for real entity relationships")
 
     def _build_mock_topology(self) -> Dict[str, List[str]]:
         """Build mock entity relationships for testing.

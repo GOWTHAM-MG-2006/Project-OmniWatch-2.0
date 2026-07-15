@@ -14,6 +14,8 @@ from typing import Optional
 
 import redis
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 ROLE_PERMISSIONS = {
@@ -65,8 +67,8 @@ class RBACManager:
         redis_port: Optional[int] = None,
         redis_db: int = 0,
     ):
-        self._redis_host = redis_host or os.getenv("REDIS_HOST", "localhost")
-        self._redis_port = redis_port or int(os.getenv("REDIS_PORT", "6379"))
+        self._redis_host = redis_host or config.REDIS_HOST
+        self._redis_port = redis_port or config.REDIS_PORT
         self._redis_db = redis_db
         self._redis_client: Optional[redis.Redis] = None
 

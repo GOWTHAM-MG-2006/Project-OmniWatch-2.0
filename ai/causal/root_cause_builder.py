@@ -258,7 +258,7 @@ class RootCauseBuilder:
             try:
                 return self._real_blast_radius(entity_id, candidates, signals)
             except Exception as e:
-                logger.warning("BlastRadiusCalculator failed, falling back to mock: %s", e)
+                logger.warning("BlastRadiusCalculator unavailable (%s) — using fallback blast radius. Connect to TopoBrain for real data.", e)
 
         return self._mock_blast_radius(entity_id, candidates, signals)
 

@@ -12,6 +12,7 @@ import uuid
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 
+from config import config
 from auth.sso_provider import SSOProvider
 
 router = APIRouter()
@@ -22,7 +23,7 @@ sso = SSOProvider()
 async def login(provider: str = "google"):
     """Redirect to SSO provider for authentication."""
     state = str(uuid.uuid4())
-    redirect_uri = "http://localhost:8000/api/v1/auth/callback"
+    redirect_uri = config.SSO_REDIRECT_URI
     auth_url = sso.get_oidc_authorization_url(
         redirect_uri=redirect_uri,
         state=state,
@@ -35,16 +36,26 @@ async def login(provider: str = "google"):
 async def callback(code: str, state: str):
     """Handle SSO callback — exchange code for token.
 
-    In production, this would exchange the authorization code with the IdP
-    for tokens. For now, it returns a placeholder indicating the flow is
-    acknowledged.
+    In production, exchanges the authorization code with the IdP for tokens.
     """
-    return {
-        "status": "callback_received",
-        "code": code,
-        "state": state,
-        "message": "SSO callback processed. In production, tokens would be issued here.",
-    }
+    import os
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        token_data = sso.exchange_code(code, state)
+        if token_data:
+            logger.info("SSO callback successful for user %s", token_data.get("user_id"))
+            return {
+                "status": "authenticated",
+                "user_id": token_data.get("user_id"),
+                "roles": token_data.get("roles", []),
+            }
+        else:
+            return {"status": "error", "message": "Token exchange failed"}
+    except Exception as e:
+        logger.warning("SSO callback failed: %s", e)
+        return {"status": "error", "message": "Authentication failed"}
 
 
 @router.post("/logout")

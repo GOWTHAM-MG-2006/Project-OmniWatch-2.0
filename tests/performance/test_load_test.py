@@ -1,14 +1,12 @@
 import pytest
-from performance.load_test_full import LoadTestSuite
+from performance.load_test_full import LoadTestRunner
 
 
-class TestLoadTestSuite:
+class TestLoadTestRunner:
     def test_init(self):
-        suite = LoadTestSuite()
-        assert suite is not None
+        runner = LoadTestRunner()
+        assert runner is not None
 
-    def test_generate_report(self):
-        suite = LoadTestSuite()
-        suite.results = {"throughput": 10000, "latency_p99": 45}
-        report = suite.generate_report()
-        assert "Load Test Report" in report
+    def test_init_with_url(self):
+        runner = LoadTestRunner(base_url="http://localhost:8000")
+        assert runner.base_url == "http://localhost:8000"

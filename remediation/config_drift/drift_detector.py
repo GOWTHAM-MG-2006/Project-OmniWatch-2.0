@@ -16,6 +16,7 @@ import subprocess
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
 from remediation.config_drift import sanitize_entity
 
 logger = logging.getLogger(__name__)
@@ -83,7 +84,7 @@ class DriftDetector:
             if kubeconfig:
                 kubeconfig = sanitize_entity(kubeconfig)
                 cmd.extend(["--kubeconfig", kubeconfig])
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=config.KUBECTL_TIMEOUT)
             if proc.returncode == 0:
                 deployments = json.loads(proc.stdout)
                 for deploy in deployments.get("items", []):
@@ -124,7 +125,7 @@ class DriftDetector:
         try:
             proc = subprocess.run(
                 ["terraform", "plan", "-detailed-exitcode", "-no-color"],
-                capture_output=True, text=True, timeout=120,
+                capture_output=True, text=True, timeout=config.TERRAFORM_TIMEOUT,
                 cwd=terraform_dir,
             )
             # Exit code 2 = changes detected

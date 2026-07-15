@@ -15,6 +15,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -28,7 +30,7 @@ class CloudAPIPoller:
     """Polls cloud provider APIs for metrics and cost data."""
 
     def __init__(self, kafka_bootstrap: str | None = None):
-        self.kafka_bootstrap = kafka_bootstrap or os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+        self.kafka_bootstrap = kafka_bootstrap or config.KAFKA_BOOTSTRAP_SERVERS
         self._producer = None
         self._poll_count = 0
 
@@ -83,12 +85,37 @@ class CloudAPIPoller:
             from azure.monitor.monitor import MonitorClient
             from azure.identity import DefaultAzureCredential
             credential = DefaultAzureCredential()
-            client = MonitorClient(credential, os.getenv("AZURE_SUBSCRIPTION_ID", ""))
-            logger.debug("Azure Monitor client initialized")
+            subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID", "")
+            resource_group = os.getenv("AZURE_RESOURCE_GROUP", "default")
+            client = MonitorClient(credential, subscription_id)
+
+            resource_uri = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Compute/virtualMachines"
+            metric_names = ["Percentage CPU", "Available Memory Bytes"]
+
+            for metric_name in metric_names:
+                try:
+                    metrics_data = client.metrics.list(
+                        resource_uri=resource_uri,
+                        metric_names=[metric_name],
+                        aggregation="Average",
+                        interval="PT5M"
+                    )
+                    for m in metrics_data:
+                        if m.timeseries and len(m.timeseries) > 0 and m.timeseries[0].data:
+                            latest = m.timeseries[0].data[-1]
+                            metrics.append({
+                                "source": "azure",
+                                "metric": m.name,
+                                "value": latest.average,
+                                "timestamp": str(latest.time_stamp),
+                            })
+                except Exception as e:
+                    logger.warning("Azure metric %s failed: %s", metric_name, e)
+
         except ImportError:
-            logger.debug("azure-identity not installed — Azure polling disabled")
+            logger.warning("azure-identity not installed — pip install azure-identity azure-monitor")
         except Exception as e:
-            logger.warning("Azure Monitor init failed: %s", e)
+            logger.warning("Azure Monitor polling failed: %s", e)
 
         return metrics
 
@@ -98,11 +125,32 @@ class CloudAPIPoller:
         try:
             from google.cloud import monitoring_v3
             client = monitoring_v3.MetricServiceClient()
-            logger.debug("GCP Monitoring client initialized")
+            project_id = os.getenv("GCP_PROJECT_ID", "")
+            project_name = f"projects/{project_id}"
+
+            interval = monitoring_v3.TimeInterval()
+            results = client.list_time_series(
+                request={
+                    "name": project_name,
+                    "filter": 'metric.type="compute.googleapis.com/instance/cpu/utilization"',
+                    "interval": interval,
+                }
+            )
+            for ts in results:
+                if ts.points:
+                    latest = ts.points[0]
+                    metrics.append({
+                        "source": "gcp",
+                        "metric": ts.metric.type,
+                        "value": latest.value.double_value,
+                        "resource": ts.resource.labels.get("instance_id", "unknown"),
+                        "timestamp": str(latest.interval.end_time),
+                    })
+
         except ImportError:
-            logger.debug("google-cloud-monitoring not installed — GCP polling disabled")
+            logger.warning("google-cloud-monitoring not installed — pip install google-cloud-monitoring")
         except Exception as e:
-            logger.warning("GCP Monitoring init failed: %s", e)
+            logger.warning("GCP Monitoring polling failed: %s", e)
 
         return metrics
 

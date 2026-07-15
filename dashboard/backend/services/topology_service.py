@@ -4,6 +4,8 @@ import os
 import logging
 from typing import Any, Optional
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,16 +48,16 @@ class TopologyService:
     def get_nodes(self, node_type: str = None) -> list[dict]:
         """Get all nodes or filtered by type."""
         if node_type:
-            query = f"MATCH (n:{node_type}) RETURN n.* LIMIT 500"
+            query = f"MATCH (n:{node_type}) RETURN n.* LIMIT {config.TOPOLOGY_QUERY_LIMIT}"
         else:
-            query = "MATCH (n) RETURN n.* LIMIT 500"
+            query = f"MATCH (n) RETURN n.* LIMIT {config.TOPOLOGY_QUERY_LIMIT}"
         return self._execute(query)
 
     def get_edges(self) -> list[dict]:
         """Get all edges."""
-        query = """MATCH (a)-[r]->(b) 
+        query = f"""MATCH (a)-[r]->(b) 
         RETURN a.id as source, b.id as target, type(r) as type, r.* 
-        LIMIT 1000"""
+        LIMIT {config.TOPOLOGY_EDGES_LIMIT}"""
         return self._execute(query)
 
     def get_entity(self, entity_id: str) -> dict | None:
@@ -66,14 +68,14 @@ class TopologyService:
 
     def get_neighbors(self, entity_id: str) -> list[dict]:
         """Get neighbors of an entity."""
-        query = """MATCH (n)-[r]-(m) WHERE n.id = $id 
-        RETURN m.id, m.name, type(r) as rel_type LIMIT 50"""
+        query = f"""MATCH (n)-[r]-(m) WHERE n.id = $id 
+        RETURN m.id, m.name, type(r) as rel_type LIMIT {config.TOPOLOGY_NEIGHBORS_LIMIT}"""
         return self._execute(query, {"id": entity_id})
 
     def get_blast_radius(self, entity_id: str) -> dict:
         """Calculate blast radius using BFS."""
-        query = """MATCH (n)-[*1..3]-(m) WHERE n.id = $id 
-        RETURN DISTINCT m.id, m.name, m.type LIMIT 100"""
+        query = f"""MATCH (n)-[*1..3]-(m) WHERE n.id = $id 
+        RETURN DISTINCT m.id, m.name, m.type LIMIT {config.TOPOLOGY_BLAST_RADIUS_LIMIT}"""
         affected = self._execute(query, {"id": entity_id})
         return {
             "root_cause": entity_id,

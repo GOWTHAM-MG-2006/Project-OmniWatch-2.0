@@ -132,13 +132,17 @@ class ChaosSimulator:
         self, target: str, failure: dict, duration: int,
         downstream: list[str], upstream: list[str],
     ) -> dict[str, Any]:
-        """Mock chaos simulation."""
+        """Mock chaos simulation when SimPy is unavailable."""
+        import logging
+        logger.warning("SimPy not installed — using estimated chaos values. Install: pip install simpy")
         blast = [{"entity": target, "impact": failure["description"], "severity": "HIGH"}]
         if downstream:
             blast.append({"entity": downstream[0], "impact": "cascade", "severity": "MEDIUM"})
         return {
             "blast_radius": blast,
-            "resilience_gaps": ["mock simulation — SimPy not installed"],
+            "resilience_gaps": ["SimPy not installed — using estimated values"],
             "recovery_path": [f"Restart {target}"],
             "estimated_downtime_minutes": round(duration / 60, 1),
+            "simulation_type": "estimated",
+            "note": "Install simpy for real simulation: pip install simpy",
         }

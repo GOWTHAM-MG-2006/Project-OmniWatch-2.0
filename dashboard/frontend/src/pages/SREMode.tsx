@@ -40,7 +40,7 @@ export default function SREMode() {
     useApi<IncidentResponse>('/api/v1/incidents/')
   const { data: status, loading: statusLoading, error: statusError, refetch: refetchStatus } =
     useApi<SystemStatus>('/api/v1/status')
-  const { connected } = useWebSocket('ws://localhost:8000/ws')
+  const { connected } = useWebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws')
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {

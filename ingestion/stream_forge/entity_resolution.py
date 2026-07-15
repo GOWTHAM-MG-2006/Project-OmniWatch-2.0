@@ -17,6 +17,8 @@ from datetime import datetime
 
 import redis
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 # Entity type hierarchy for resolution priority
@@ -40,8 +42,8 @@ class EntityResolution:
         redis_port: int | None = None,
         redis_db: int = 0,
     ):
-        self.redis_host = redis_host or os.getenv("REDIS_HOST", "localhost")
-        self.redis_port = int(redis_port or os.getenv("REDIS_PORT", "6379"))
+        self.redis_host = redis_host or config.REDIS_HOST
+        self.redis_port = int(redis_port or config.REDIS_PORT)
         self.redis_db = redis_db
         self._redis = None
 
@@ -49,7 +51,7 @@ class EntityResolution:
         self.PREFIX_VOLATILE = "ow:entity:volatile:"
         self.PREFIX_STABLE = "ow:entity:stable:"
         self.PREFIX_HISTORY = "ow:entity:history:"
-        self.TTL_SECONDS = 86400 * 7  # 7 days
+        self.TTL_SECONDS = config.ENTITY_RESOLUTION_TTL
 
     @property
     def client(self) -> redis.Redis:

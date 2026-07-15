@@ -14,6 +14,8 @@ from typing import Optional
 
 import numpy as np
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -139,7 +141,7 @@ class ProphetForecaster:
             period_samples = n
 
         ts_base = datetime.fromisoformat(timestamps[-1].replace("Z", "+00:00").replace("+00:00", ""))
-        min_per_step = 5.0
+        min_per_step = config.FORECAST_MIN_PER_STEP
         horizons_dict = {}
 
         for h in horizons:

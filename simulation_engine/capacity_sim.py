@@ -111,7 +111,9 @@ class CapacitySimulator:
     def _mock_capacity(
         self, resources: dict, multiplier: float, duration: int,
     ) -> dict[str, Any]:
-        """Mock capacity simulation."""
+        """Mock capacity simulation when SimPy is unavailable."""
+        import logging
+        logger.warning("SimPy not installed — using estimated capacity values. Install: pip install simpy")
         cpu = resources.get("cpu_percent", 50)
         proj_cpu = min(100, cpu * multiplier)
         saturation = []
@@ -123,4 +125,6 @@ class CapacitySimulator:
             "saturation_points": saturation,
             "recommended_actions": actions,
             "risk_level": "HIGH" if saturation else "LOW",
+            "simulation_type": "estimated",
+            "note": "Install simpy for real simulation: pip install simpy",
         }

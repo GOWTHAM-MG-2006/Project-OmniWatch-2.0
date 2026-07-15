@@ -15,6 +15,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,8 +29,8 @@ class KnowledgeBase:
         clickhouse_port: int | None = None,
         minio_endpoint: str | None = None,
     ):
-        self.ch_host = clickhouse_host or os.getenv("CLICKHOUSE_HOST", "localhost")
-        self.ch_port = int(clickhouse_port or os.getenv("CLICKHOUSE_PORT", "9000"))
+        self.ch_host = clickhouse_host or config.CLICKHOUSE_HOST
+        self.ch_port = int(clickhouse_port or config.CLICKHOUSE_PORT)
         self.minio_endpoint = minio_endpoint or os.getenv("MINIO_ENDPOINT", "localhost:9001")
         self._ch_client = None
         self._minio_client = None

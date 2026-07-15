@@ -16,6 +16,8 @@ from typing import Any, Callable
 from confluent_kafka import Producer, Consumer, KafkaError, KafkaException
 from confluent_kafka.admin import AdminClient, NewTopic
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 # All Kafka topics from AGENTS.md
@@ -38,9 +40,7 @@ class KafkaProducerWrapper:
     """Kafka producer for publishing events to OmniWatch topics."""
 
     def __init__(self, bootstrap_servers: str | None = None):
-        self.bootstrap_servers = bootstrap_servers or os.getenv(
-            "KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"
-        )
+        self.bootstrap_servers = bootstrap_servers or config.KAFKA_BOOTSTRAP_SERVERS
         self._producer = None
 
     @property
@@ -50,9 +50,9 @@ class KafkaProducerWrapper:
                 "bootstrap.servers": self.bootstrap_servers,
                 "client.id": "omniwatch-streamforge",
                 "acks": "all",
-                "retries": 3,
-                "linger.ms": 10,
-                "batch.size": 16384,
+                "retries": config.KAFKA_RETRIES,
+                "linger.ms": config.KAFKA_LINGER_MS,
+                "batch.size": config.KAFKA_BATCH_SIZE,
             })
         return self._producer
 
@@ -124,9 +124,7 @@ class KafkaConsumerWrapper:
         auto_offset_reset: str = "earliest",
     ):
         self.topics = topics
-        self.bootstrap_servers = bootstrap_servers or os.getenv(
-            "KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"
-        )
+        self.bootstrap_servers = bootstrap_servers or config.KAFKA_BOOTSTRAP_SERVERS
         self._consumer = None
         self._group_id = group_id
         self._auto_offset_reset = auto_offset_reset
@@ -139,8 +137,8 @@ class KafkaConsumerWrapper:
                 "group.id": self._group_id,
                 "auto.offset.reset": self._auto_offset_reset,
                 "enable.auto.commit": True,
-                "auto.commit.interval.ms": 5000,
-                "session.timeout.ms": 30000,
+                "auto.commit.interval.ms": config.KAFKA_AUTO_COMMIT_INTERVAL,
+                "session.timeout.ms": config.KAFKA_SESSION_TIMEOUT,
             })
         return self._consumer
 
@@ -200,7 +198,7 @@ class KafkaConsumerWrapper:
 
 def create_topics(bootstrap_servers: str | None = None, num_partitions: int = 3):
     """Create all required Kafka topics."""
-    servers = bootstrap_servers or os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+    servers = bootstrap_servers or config.KAFKA_BOOTSTRAP_SERVERS
     admin = AdminClient({"bootstrap.servers": servers})
 
     new_topics = [

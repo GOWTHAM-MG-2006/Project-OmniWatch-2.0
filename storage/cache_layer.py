@@ -18,6 +18,8 @@ import time
 from collections import OrderedDict
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -30,7 +32,7 @@ except ImportError:
 class L1Cache:
     """In-memory LRU dict with per-entry TTL and configurable max size."""
 
-    def __init__(self, max_size: int = 1024, default_ttl: int = 60):
+    def __init__(self, max_size: int = config.L1_CACHE_MAX_SIZE, default_ttl: int = config.L1_CACHE_TTL):
         self._max_size = max_size
         self._default_ttl = default_ttl
         self._data: OrderedDict[str, dict[str, Any]] = OrderedDict()
@@ -105,8 +107,8 @@ class L1Cache:
 class L2Cache:
     """Redis-backed distributed cache with TTL."""
 
-    def __init__(self, host: str = "localhost", port: int = 6379,
-                 db: int = 0, default_ttl: int = 120,
+    def __init__(self, host: str = config.REDIS_HOST, port: int = config.REDIS_PORT,
+                 db: int = 0, default_ttl: int = config.L2_CACHE_TTL,
                  prefix: str = "omniwatch:cache:",
                  password: str | None = None):
         self._prefix = prefix
@@ -119,7 +121,7 @@ class L2Cache:
             try:
                 self._client = _redis.Redis(
                     host=host, port=port, db=db, password=password,
-                    socket_connect_timeout=3, socket_timeout=5,
+                    socket_connect_timeout=config.REDIS_CONNECT_TIMEOUT, socket_timeout=config.REDIS_SOCKET_TIMEOUT,
                     decode_responses=True,
                 )
                 self._client.ping()
@@ -204,13 +206,13 @@ class L2Cache:
 class CacheLayer:
     """Multi-level cache: L1 (in-memory LRU) + L2 (Redis)."""
 
-    def __init__(self, l1_max_size: int = 1024, l1_ttl: int = 60,
-                 l2_ttl: int = 120, l2_enabled: bool = True):
+    def __init__(self, l1_max_size: int = config.L1_CACHE_MAX_SIZE, l1_ttl: int = config.L1_CACHE_TTL,
+                 l2_ttl: int = config.L2_CACHE_TTL, l2_enabled: bool = True):
         self._l1 = L1Cache(max_size=l1_max_size, default_ttl=l1_ttl)
         self._l2: L2Cache | None = None
         if l2_enabled:
-            redis_host = os.getenv("REDIS_HOST", "localhost")
-            redis_port = int(os.getenv("REDIS_PORT", "6379"))
+            redis_host = config.REDIS_HOST
+            redis_port = config.REDIS_PORT
             redis_pw = os.getenv("REDIS_PASSWORD") or None
             self._l2 = L2Cache(host=redis_host, port=redis_port,
                                default_ttl=l2_ttl, password=redis_pw)

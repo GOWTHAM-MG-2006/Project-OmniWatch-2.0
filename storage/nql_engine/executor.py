@@ -61,8 +61,9 @@ class QueryExecutor:
 
             elif tier == "cold" and self.cold_engine:
                 try:
+                    cold_path = os.environ.get("NQL_COLD_STORE_PATH", "/tmp/omniwatch-cold")
                     cold_results = self.cold_engine.query_parquet(
-                        f"/tmp/omniwatch-cold/{target}",
+                        f"{cold_path}/{target}",
                         f"SELECT * FROM data LIMIT 1000",
                     )
                     results.extend(cold_results)
@@ -99,11 +100,32 @@ class QueryExecutor:
         return filtered
 
     def _execute_join(self, data: list[dict], step: dict) -> list[dict[str, Any]]:
-        """Execute a JOIN with another target."""
+        """Execute an in-memory JOIN with another target."""
         target = step.get("target", "")
         on_field = step.get("on", "")
-        logger.info("JOIN %s ON %s (requires cross-backend query)", target, on_field)
-        return data
+
+        if not on_field:
+            logger.warning("JOIN requires an ON field — returning data unchanged")
+            return data
+
+        try:
+            right_results = self._execute_scan(target, None)
+            right_index = {}
+            for row in right_results:
+                key = row.get(on_field)
+                if key is not None:
+                    right_index[key] = row
+
+            joined = []
+            for left_row in data:
+                key = left_row.get(on_field)
+                if key in right_index:
+                    merged = {**left_row, **{f"right_{k}": v for k, v in right_index[key].items()}}
+                    joined.append(merged)
+            return joined
+        except Exception as e:
+            logger.warning("JOIN failed: %s", e)
+            return data
 
     def _execute_project(self, data: list[dict], step: dict) -> list[dict[str, Any]]:
         """Project specified fields from results."""

@@ -16,6 +16,7 @@ from typing import Any
 
 import clickhouse_connect
 
+from config import config
 from storage.query_validator import validate_query
 
 logger = logging.getLogger(__name__)
@@ -30,8 +31,8 @@ class WarmStore:
         port: int | None = None,
         database: str = "omniwatch",
     ):
-        self.host = host or os.getenv("CLICKHOUSE_HOST", "localhost")
-        self.port = port or int(os.getenv("CLICKHOUSE_PORT", "9000"))
+        self.host = host or config.CLICKHOUSE_HOST
+        self.port = port or config.CLICKHOUSE_PORT
         self.database = database
         self._client = None
 

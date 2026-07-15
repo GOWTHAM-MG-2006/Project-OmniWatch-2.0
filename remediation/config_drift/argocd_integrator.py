@@ -15,11 +15,12 @@ from typing import Any
 
 import httpx
 
+from config import config
 from remediation.config_drift import sanitize_entity
 
 logger = logging.getLogger(__name__)
 
-ARGOCD_BASE_URL = os.getenv("ARGOCD_ENDPOINT", "http://localhost:8080")
+ARGOCD_BASE_URL = config.ARGOCD_URL
 ARGOCD_TOKEN = os.getenv("ARGOCD_TOKEN", "")
 
 
@@ -50,7 +51,7 @@ class ArgoCDIntegrator:
         try:
             url = f"{self.base_url}/api/v1/applications/{app_name}/sync"
             headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=config.ARGOCD_HTTP_TIMEOUT) as client:
                 resp = await client.post(url, headers=headers, json={
                     "force": True,
                     "prune": True,
@@ -60,5 +61,5 @@ class ArgoCDIntegrator:
                     return {"success": True, "output": f"ArgoCD sync triggered for {app_name}", "app_name": app_name}
                 return {"success": False, "output": f"ArgoCD sync failed: {resp.status_code} {resp.text}"}
         except Exception as e:
-            logger.warning("ArgoCD sync failed (%s), using mock", e)
-            return {"success": True, "output": f"[MOCK] ArgoCD sync triggered for {app_name}", "app_name": app_name}
+            logger.error("ArgoCD sync failed: %s", e)
+            return {"success": False, "output": f"ArgoCD sync failed: {str(e)}", "error": str(e)}

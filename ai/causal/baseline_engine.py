@@ -15,6 +15,8 @@ from datetime import datetime
 
 import numpy as np
 
+from config import config
+
 try:
     import redis as redis_lib
 
@@ -54,7 +56,7 @@ class _InMemoryCache:
             return None
         return value
 
-    def set(self, key: str, value: Any, ttl: int = 3600):
+    def set(self, key: str, value: Any, ttl: int = config.BASELINE_CACHE_TTL):
         expiry = datetime.now().timestamp() + ttl
         self._store[key] = (value, expiry)
 
@@ -78,7 +80,7 @@ class BaselineEngine:
     """
 
     REDIS_KEY_PREFIX = "baseline:"
-    CACHE_TTL = 3600  # 1 hour
+    CACHE_TTL = config.BASELINE_CACHE_TTL
 
     def __init__(self, redis_url: str | None = None):
         self._cache = self._init_cache(redis_url)
@@ -92,8 +94,8 @@ class BaselineEngine:
             return _InMemoryCache()
 
         url = redis_url or os.getenv("REDIS_URL") or (
-            f"redis://{os.getenv('REDIS_HOST', 'localhost')}:"
-            f"{os.getenv('REDIS_PORT', '6379')}/"
+            f"redis://{config.REDIS_HOST}:"
+            f"{config.REDIS_PORT}/"
             f"{os.getenv('REDIS_DB', '0')}"
         )
 

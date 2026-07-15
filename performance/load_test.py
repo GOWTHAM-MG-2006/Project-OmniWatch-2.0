@@ -16,6 +16,8 @@ from datetime import datetime, timezone
 from typing import Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from config import config
+
 try:
     import requests
     HAS_REQUESTS = True
@@ -28,7 +30,7 @@ logger = logging.getLogger(__name__)
 class LoadTester:
     """Load testing framework for OmniWatch components."""
 
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = config.DASHBOARD_BACKEND_URL):
         self.base_url = base_url
         self.results: list[dict[str, Any]] = []
 
@@ -84,7 +86,7 @@ class LoadTester:
             nonlocal errors, total_requests
             try:
                 if HAS_REQUESTS:
-                    resp = requests.get(f"{self.base_url}{endpoint}", timeout=5)
+                    resp = requests.get(f"{self.base_url}{endpoint}", timeout=config.LOAD_TEST_HTTP_TIMEOUT)
                     return resp.status_code, resp.elapsed.total_seconds()
                 else:
                     # Mock response

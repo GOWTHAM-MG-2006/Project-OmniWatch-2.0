@@ -28,7 +28,7 @@ export function useWebSocket(
 
   const buildUrl = useCallback(() => {
     const token = localStorage.getItem('auth_token')
-    const wsBase = url.startsWith('ws') ? url : `ws://localhost:8000${url}`
+    const wsBase = url.startsWith('ws') ? url : `${import.meta.env.VITE_WS_URL || 'ws://localhost:8000'}${url}`
     if (token) {
       const separator = wsBase.includes('?') ? '&' : '?'
       return `${wsBase}${separator}token=${token}`

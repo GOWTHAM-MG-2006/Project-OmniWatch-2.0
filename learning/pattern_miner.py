@@ -14,6 +14,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
 from learning.knowledge_base import KnowledgeBase
 
 logger = logging.getLogger(__name__)
@@ -139,7 +140,7 @@ class PatternMiner:
                         patterns.append({
                             "pattern_type": "unusual_cluster",
                             "occurrences": len(unusual_indices.tolist()),
-                            "confidence": 0.7,
+                            "confidence": config.PATTERN_MINER_CONFIDENCE,
                             "recommendation": "Unusual incident pattern detected — manual review recommended",
                         })
             except Exception as e:

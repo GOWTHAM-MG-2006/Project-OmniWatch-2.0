@@ -14,6 +14,8 @@ from typing import Optional
 
 import numpy as np
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -29,7 +31,7 @@ if TORCH_AVAILABLE:
     class SimpleLSTM(nn.Module):
         """Minimal LSTM forecaster for single-variable time series."""
 
-        def __init__(self, input_size: int = 1, hidden_size: int = 32, num_layers: int = 2):
+        def __init__(self, input_size: int = 1, hidden_size: int = config.LSTM_HIDDEN_SIZE, num_layers: int = 2):
             super().__init__()
             self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
             self.fc = nn.Linear(hidden_size, 1)
@@ -43,10 +45,10 @@ class LSTMForecaster:
     """Forecasts metric values using LSTM when PyTorch is available, with EWMA fallback."""
 
     DEFAULT_HORIZONS = [60, 1440, 10080]
-    LOOKBACK = 24  # window size for input sequences
-    EPOCHS = 50
-    HIDDEN_SIZE = 32
-    MIN_PER_STEP = 5.0
+    LOOKBACK = config.LSTM_LOOKBACK
+    EPOCHS = config.LSTM_EPOCHS
+    HIDDEN_SIZE = config.LSTM_HIDDEN_SIZE
+    MIN_PER_STEP = config.LSTM_MIN_PER_STEP
 
     def __init__(self, confidence_level: float = 0.95):
         self.confidence_level = confidence_level

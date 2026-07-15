@@ -14,6 +14,7 @@ import logging
 import subprocess
 from typing import Any
 
+from config import config
 from remediation.config_drift import sanitize_config_value, sanitize_entity
 
 logger = logging.getLogger(__name__)
@@ -48,11 +49,11 @@ class AnsibleIntegrator:
                 "-e", f"expected_config={expected}",
                 "-e", f"actual_config={actual}",
             ]
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=config.ANSIBLE_TIMEOUT)
             if proc.returncode == 0:
                 return {"success": True, "output": proc.stdout.strip()[-500:]}
             return {"success": False, "output": proc.stderr.strip()[-500:]}
         except FileNotFoundError:
-            return {"success": True, "output": f"[MOCK] Ansible playbook triggered for OS drift: {entity}"}
+            return {"success": False, "output": "ansible-playbook not found", "error": "ansible binary not available"}
         except Exception as e:
             return {"success": False, "output": str(e)}

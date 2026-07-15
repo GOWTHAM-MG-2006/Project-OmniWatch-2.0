@@ -19,6 +19,8 @@ from urllib.parse import urlencode
 import jwt
 import redis
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -62,10 +64,10 @@ class SSOProvider:
     REFRESH_TOKEN_EXPIRY_DAYS = 7
 
     OIDC_ENDPOINTS = {
-        "okta": "https://your-domain.okta.com/oauth2/default/v1/authorize",
-        "auth0": "https://your-tenant.auth0.com/authorize",
-        "azure": "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize",
-        "google": "https://accounts.google.com/o/oauth2/v2/auth",
+        "okta": os.environ.get("OIDC_OKTA_URL", ""),
+        "auth0": os.environ.get("OIDC_AUTH0_URL", ""),
+        "azure": os.environ.get("OIDC_AZURE_URL", "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize"),
+        "google": os.environ.get("OIDC_GOOGLE_URL", "https://accounts.google.com/o/oauth2/v2/auth"),
     }
 
     def __init__(
@@ -78,8 +80,8 @@ class SSOProvider:
     ):
         self._jwt_private_key = jwt_private_key or JWT_PRIVATE_KEY
         self._jwt_public_key = jwt_public_key or JWT_PUBLIC_KEY
-        self._redis_host = redis_host or os.getenv("REDIS_HOST", "localhost")
-        self._redis_port = redis_port or int(os.getenv("REDIS_PORT", "6379"))
+        self._redis_host = redis_host or config.REDIS_HOST
+        self._redis_port = redis_port or config.REDIS_PORT
         self._redis_db = redis_db
         self._redis_client: Optional[redis.Redis] = None
 

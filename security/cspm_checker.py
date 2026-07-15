@@ -10,9 +10,14 @@ Outputs: Compliance check results with score → NexusStore
 
 import hashlib
 import json
+import logging
 import subprocess
 from datetime import datetime, timezone
 from typing import Any
+
+from config import config
+
+logger = logging.getLogger(__name__)
 
 CIS_CHECKS = {
     "CIS-K8s-1.1": {
@@ -110,7 +115,7 @@ class CSPMChecker:
             subprocess.run(
                 ["checkov", "--version"],
                 capture_output=True,
-                timeout=5,
+                timeout=config.SCANNER_TIMEOUT,
             )
             return True
         except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
@@ -124,7 +129,7 @@ class CSPMChecker:
     def _check_with_checkov(self, config_path: str) -> dict[str, Any]:
         try:
             cmd = ["checkov", "-d", config_path, "-o", "json", "--framework", "kubernetes"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=config.SCANNER_SCAN_TIMEOUT)
             if result.returncode not in (0, 1):
                 return self._mock_check(config_path)
 
@@ -142,26 +147,13 @@ class CSPMChecker:
                     })
 
             return self._build_result(config_path, checks)
-        except (subprocess.TimeoutExpired, json.JSONDecodeError, Exception):
-            return self._mock_check(config_path)
+        except (subprocess.TimeoutExpired, json.JSONDecodeError, Exception) as e:
+            logger.warning("Checkov scan failed for %s: %s", config_path, e)
+            return {"config_path": config_path, "checks": [], "total": 0, "passed": 0, "failed": 0, "error": str(e)}
 
     def _mock_check(self, config_path: str) -> dict[str, Any]:
-        config_hash = hashlib.md5(config_path.encode()).hexdigest()[:8]
-        seed = int(config_hash, 16)
-
-        mock_checks = []
-        for check_id, info in CIS_CHECKS.items():
-            passed = (seed + int(check_id.split(".")[-1])) % 3 != 0
-            mock_checks.append({
-                "check_id": check_id,
-                "name": info["description"],
-                "passed": passed,
-                "severity": info["severity"],
-                "resource": f"cluster-{config_hash[:4]}",
-                "file_path": config_path,
-            })
-
-        return self._build_result(config_path, mock_checks)
+        """Fallback when checkov is not available."""
+        return {"config_path": config_path, "checks": [], "total": 0, "passed": 0, "failed": 0, "error": "checkov not installed"}
 
     def _build_result(self, config_path: str, checks: list[dict]) -> dict[str, Any]:
         total = len(checks)

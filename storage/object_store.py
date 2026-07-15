@@ -17,6 +17,8 @@ from typing import Any
 from minio import Minio
 from minio.error import S3Error
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 

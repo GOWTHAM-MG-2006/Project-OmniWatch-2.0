@@ -15,6 +15,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,8 +28,8 @@ class ApprovalWorkflow:
         clickhouse_host: str | None = None,
         clickhouse_port: int | None = None,
     ):
-        self.ch_host = clickhouse_host or os.getenv("CLICKHOUSE_HOST", "localhost")
-        self.ch_port = int(clickhouse_port or os.getenv("CLICKHOUSE_PORT", "9000"))
+        self.ch_host = clickhouse_host or config.CLICKHOUSE_HOST
+        self.ch_port = int(clickhouse_port or config.CLICKHOUSE_PORT)
         self._conn = None
 
     @property

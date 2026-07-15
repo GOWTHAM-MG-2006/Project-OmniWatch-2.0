@@ -75,7 +75,8 @@ async def search_knowledge(
         outcome="success",
         metadata={"query": query},
     )
-    return {"query": query, "results": []}
+    results = data_service.search_knowledge(query)
+    return {"query": query, "results": results, "total": len(results)}
 
 
 @router.get("/{entry_id}", response_model=KnowledgeEntryResponse)
@@ -84,7 +85,7 @@ async def get_knowledge_entry(
     user: dict = Depends(require_auth("knowledge", "read")),
 ):
     """Get a specific knowledge base entry."""
-    entry = None
+    entry = data_service.get_knowledge_entry(entry_id)
     if not entry:
         raise HTTPException(status_code=404, detail=f"Knowledge entry {entry_id} not found")
     audit_logger.log_event(

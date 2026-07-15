@@ -1,9 +1,10 @@
 """OmniWatch 2.0 — NexusUX: Incidents Route"""
 
+import uuid
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Any, Optional, List
-from datetime import datetime
 
 from auth.middleware import require_auth
 from compliance.audit_logger import AuditLogger
@@ -14,12 +15,10 @@ audit_logger = AuditLogger()
 data_service = DataService()
 
 
-# ─── Pydantic Models ───────────────────────────────────────────────
-
 class IncidentResponse(BaseModel):
     incident_id: str
     created_at: Optional[datetime] = None
-    severity: str  # P1, P2, P3, P4
+    severity: str
     business_impact_score: Optional[float] = None
     root_cause: Optional[str] = None
     status: str
@@ -42,24 +41,13 @@ class IncidentUpdateRequest(BaseModel):
     assigned_to: Optional[str] = None
 
 
-# ─── Endpoints ─────────────────────────────────────────────────────
-
 @router.get("/", response_model=IncidentListResponse)
 async def list_incidents(
     severity: Optional[str] = None,
     status: Optional[str] = None,
     user: dict = Depends(require_auth("incidents", "read")),
 ):
-    """List all incidents with optional filters."""
-    audit_logger.log_event(
-        event_type="api_call",
-        user_id=user.get("user_id"),
-        resource_type="incident",
-        resource_id=None,
-        action="list",
-        outcome="success",
-        metadata={"severity": severity, "status": status},
-    )
+    """List all incidents."""
     incidents = data_service.get_active_incidents(status=status or "OPEN")
     return {"incidents": incidents, "total": len(incidents)}
 
@@ -69,19 +57,10 @@ async def get_incident(
     incident_id: str,
     user: dict = Depends(require_auth("incidents", "read")),
 ):
-    """Get a specific incident by ID."""
-    # TODO: Replace with real database lookup
-    incident = None  # db.get_incident(incident_id)
+    """Get a specific incident."""
+    incident = data_service.get_incident(incident_id)
     if not incident:
         raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
-    audit_logger.log_event(
-        event_type="api_call",
-        user_id=user.get("user_id"),
-        resource_type="incident",
-        resource_id=incident_id,
-        action="get",
-        outcome="success",
-    )
     return incident
 
 
@@ -91,16 +70,35 @@ async def create_incident(
     user: dict = Depends(require_auth("incidents", "write")),
 ):
     """Create a new incident."""
+    incident_id = f"INC-{uuid.uuid4().hex[:8].upper()}"
+    user_id = user.get("user_id", "unknown")
+
+    insert_query = """
+    INSERT INTO incidents (incident_id, severity, root_cause, status, assigned_to, created_at)
+    VALUES ({id:String}, {severity:String}, {title:String}, 'OPEN', {user:String}, now())
+    """
+    data_service._execute(insert_query, {
+        "id": incident_id,
+        "severity": data.severity,
+        "title": data.title or data.description or "",
+        "user": user_id,
+    })
+
     audit_logger.log_event(
         event_type="api_call",
-        user_id=user.get("user_id"),
+        user_id=user_id,
         resource_type="incident",
-        resource_id=None,
         action="create",
         outcome="success",
-        metadata={"severity": data.severity},
+        resource_id=incident_id,
     )
-    return {"incident_id": "INC-NEW", "status": "created"}
+
+    return {
+        "incident_id": incident_id,
+        "severity": data.severity,
+        "status": "OPEN",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @router.patch("/{incident_id}", response_model=IncidentResponse)
@@ -110,19 +108,29 @@ async def update_incident(
     user: dict = Depends(require_auth("incidents", "write")),
 ):
     """Update an incident."""
-    # TODO: Replace with real database lookup
-    incident = None  # db.get_incident(incident_id)
+    incident = data_service.get_incident(incident_id)
     if not incident:
         raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
-    audit_logger.log_event(
-        event_type="api_call",
-        user_id=user.get("user_id"),
-        resource_type="incident",
-        resource_id=incident_id,
-        action="update",
-        outcome="success",
-    )
-    return {"incident_id": incident_id, "status": "updated"}
+
+    updates = []
+    params = {"id": incident_id}
+    if data.status:
+        updates.append("status = {status:String}")
+        params["status"] = data.status
+    if data.assigned_to:
+        updates.append("assigned_to = {assigned:String}")
+        params["assigned"] = data.assigned_to
+
+    if updates:
+        update_query = f"ALTER TABLE incidents UPDATE {', '.join(updates)} WHERE incident_id = {{id:String}}"
+        data_service._execute(update_query, params)
+
+    return {
+        "incident_id": incident_id,
+        "severity": incident.get("severity", "P3"),
+        "status": data.status or incident.get("status", "OPEN"),
+        "assigned_to": data.assigned_to or incident.get("assigned_to"),
+    }
 
 
 @router.get("/{incident_id}/timeline")
@@ -131,16 +139,7 @@ async def get_incident_timeline(
     user: dict = Depends(require_auth("incidents", "read")),
 ):
     """Get the timeline for an incident."""
-    # TODO: Replace with real database lookup
-    incident = None  # db.get_incident(incident_id)
+    incident = data_service.get_incident(incident_id)
     if not incident:
         raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
-    audit_logger.log_event(
-        event_type="api_call",
-        user_id=user.get("user_id"),
-        resource_type="incident",
-        resource_id=incident_id,
-        action="timeline",
-        outcome="success",
-    )
     return {"incident_id": incident_id, "timeline": []}

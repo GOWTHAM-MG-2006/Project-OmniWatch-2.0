@@ -16,6 +16,8 @@ from typing import Any
 
 import kuzu
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 # Node type definitions from AGENTS.md
@@ -210,11 +212,11 @@ class GraphStore:
             rel_clause = f":{rel_type}"
 
         if direction == "out":
-            query = f"MATCH (a:Service)-[{rel_clause}]->(b) WHERE a.id = $node_id RETURN b.*"
+            query = f"MATCH (a)-[{rel_clause}]->(b) WHERE a.id = $node_id RETURN b.*"
         elif direction == "in":
-            query = f"MATCH (a)-[{rel_clause}]->(b:Service) WHERE b.id = $node_id RETURN a.*"
+            query = f"MATCH (a)-[{rel_clause}]->(b) WHERE b.id = $node_id RETURN a.*"
         else:
-            query = f"MATCH (a:Service)-[{rel_clause}]-(b) WHERE a.id = $node_id RETURN b.*"
+            query = f"MATCH (a)-[{rel_clause}]-(b) WHERE a.id = $node_id RETURN b.*"
 
         try:
             result = self.conn.execute(query, parameters={"node_id": node_id})
@@ -260,7 +262,7 @@ class GraphStore:
             logger.error("Failed to update anomaly score: %s", e)
             return False
 
-    def get_all_nodes(self, node_type: str, limit: int = 1000) -> list[dict[str, Any]]:
+    def get_all_nodes(self, node_type: str, limit: int = config.GRAPH_QUERY_LIMIT) -> list[dict[str, Any]]:
         """Get all nodes of a type."""
         self._validate_identifier(node_type, "node_type")
         query = f"MATCH (n:{node_type}) RETURN n.* LIMIT $limit"

@@ -17,6 +17,8 @@ import time
 from collections import deque
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -45,9 +47,9 @@ class _PoolEntry:
 class ClickHousePool:
     """Thread-safe ClickHouse connection pool with min/max sizing."""
 
-    def __init__(self, host: str = "localhost", port: int = 9000,
+    def __init__(self, host: str = config.CLICKHOUSE_HOST, port: int = config.CLICKHOUSE_PORT,
                  min_size: int = 2, max_size: int = 10,
-                 connect_timeout: int = 5, idle_timeout: int = 300):
+                 connect_timeout: int = 5, idle_timeout: int = config.CH_IDLE_TIMEOUT):
         self._host = host
         self._port = port
         self._min_size = min_size
@@ -70,7 +72,7 @@ class ClickHousePool:
                 host=self._host,
                 port=self._port,
                 connect_timeout=self._connect_timeout,
-                send_receive_timeout=10,
+                send_receive_timeout=config.CH_SEND_RECEIVE_TIMEOUT,
             )
             return client
         except Exception as exc:
@@ -177,9 +179,9 @@ class ClickHousePool:
 class RedisPool:
     """Redis connection pool backed by redis-py's built-in pool or a manual deque."""
 
-    def __init__(self, host: str = "localhost", port: int = 6379,
+    def __init__(self, host: str = config.REDIS_HOST, port: int = config.REDIS_PORT,
                  db: int = 0, max_connections: int = 20,
-                 password: str | None = None, idle_timeout: int = 300):
+                 password: str | None = None, idle_timeout: int = config.REDIS_IDLE_TIMEOUT):
         self._host = host
         self._port = port
         self._db = db
@@ -203,8 +205,8 @@ class RedisPool:
                     db=self._db,
                     password=self._password,
                     max_connections=self._max_connections,
-                    socket_connect_timeout=3,
-                    socket_timeout=5,
+                    socket_connect_timeout=config.REDIS_CONNECT_TIMEOUT,
+                    socket_timeout=config.REDIS_SOCKET_TIMEOUT,
                 )
                 logger.info("Redis native pool initialized (max=%d)", self._max_connections)
                 return
@@ -278,7 +280,7 @@ class RedisPool:
         if not HAS_REDIS:
             return {"healthy": 0, "unhealthy": 0, "pool_size": 0, "error": "redis not installed"}
         try:
-            test_conn = self.acquire(timeout=2)
+            test_conn = self.acquire(timeout=config.REDIS_HEALTH_TIMEOUT)
             if test_conn:
                 result = test_conn.ping()
                 self.release(test_conn)
@@ -310,10 +312,10 @@ class ConnectionPoolManager:
     """Top-level manager that owns a ClickHouse pool and a Redis pool."""
 
     def __init__(self):
-        ch_host = os.getenv("CLICKHOUSE_HOST", "localhost")
-        ch_port = int(os.getenv("CLICKHOUSE_PORT", "9000"))
-        redis_host = os.getenv("REDIS_HOST", "localhost")
-        redis_port = int(os.getenv("REDIS_PORT", "6379"))
+        ch_host = config.CLICKHOUSE_HOST
+        ch_port = config.CLICKHOUSE_PORT
+        redis_host = config.REDIS_HOST
+        redis_port = config.REDIS_PORT
         redis_pw = os.getenv("REDIS_PASSWORD") or None
 
         self._clickhouse_pool = ClickHousePool(host=ch_host, port=ch_port)

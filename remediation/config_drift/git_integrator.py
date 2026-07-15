@@ -50,7 +50,6 @@ class GitIntegrator:
             repo.git.revert("HEAD", no_edit=True)
             return {"success": True, "output": f"Reverted last commit in {entity}"}
         except ImportError:
-            cmd = f"cd {entity} && git revert {commit or 'HEAD'} --no-edit"
-            return {"success": True, "output": f"[MOCK] Would execute: {cmd}"}
+            return {"success": False, "output": "gitpython not installed", "error": "gitpython dependency missing"}
         except Exception as e:
             return {"success": False, "output": str(e)}

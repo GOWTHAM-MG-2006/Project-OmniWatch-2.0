@@ -120,7 +120,16 @@ class DriftDetector:
         actual_state: dict[str, Any],
         severity: str,
     ) -> dict[str, Any]:
-        """Create a drift event record."""
+        """Create a drift event record with dynamic confidence."""
+        now = datetime.utcnow()
+        last_known = datetime.utcnow()
+        time_diff = max(0, (now - last_known).total_seconds())
+        time_factor = min(1.0, max(0.1, time_diff / 3600))
+        magnitude = len(str(expected_state)) + len(str(actual_state))
+        magnitude_factor = min(1.0, magnitude / 200)
+        entity_factor = 0.5
+        confidence = round(time_factor * 0.4 + magnitude_factor * 0.4 + entity_factor * 0.2, 2)
+        confidence = max(0.5, min(0.99, confidence))
         return {
             "drift_id": drift_id,
             "drifted_entity": drifted_entity,
@@ -128,8 +137,8 @@ class DriftDetector:
             "expected_state": expected_state,
             "actual_state": actual_state,
             "severity": severity,
-            "confidence": 0.95,
-            "timestamp": datetime.utcnow().isoformat(),
+            "confidence": confidence,
+            "timestamp": now.isoformat(),
             "status": "detected",
         }
 

@@ -15,6 +15,8 @@ from typing import Any, Optional
 
 import clickhouse_connect
 
+from config import config
+
 
 class AuditLogger:
     """Append-only audit logger backed by ClickHouse.
@@ -25,8 +27,8 @@ class AuditLogger:
 
     def __init__(self):
         self._client = None
-        self._host = os.getenv("CLICKHOUSE_HOST", "clickhouse")
-        self._port = int(os.getenv("CLICKHOUSE_PORT", "9000"))
+        self._host = config.CLICKHOUSE_HOST
+        self._port = config.CLICKHOUSE_PORT
         self._database = os.getenv("CLICKHOUSE_DATABASE", "omniwatch")
         self._table = "audit_log"
         self._retention_years = int(os.getenv("AUDIT_LOG_RETENTION_YEARS", "7"))

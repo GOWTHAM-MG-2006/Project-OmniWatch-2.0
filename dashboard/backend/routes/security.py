@@ -100,14 +100,18 @@ async def get_cspm_status(
     user: dict = Depends(require_auth("cspm", "read")),
 ):
     """Get Cloud Security Posture Management status."""
-    audit_logger.log_event(
-        event_type="api_call",
-        user_id=user.get("user_id"),
-        resource_type="cspm",
-        resource_id=None,
-        action="status",
-        outcome="success",
-    )
+    cspm_query = """
+    SELECT count() as total,
+           sum(CASE WHEN confidence >= 0.9 THEN 1 ELSE 0 END) as compliant
+    FROM security_events
+    WHERE attack_type = 'cspm_check'
+    AND timestamp >= now() - INTERVAL 24h
+    """
+    results = data_service._execute(cspm_query)
+    if results and results[0].get("total", 0) > 0:
+        total = results[0]["total"]
+        compliant = results[0].get("compliant", 0) or 0
+        return {"compliant": compliant, "non_compliant": total - compliant, "total_checks": total}
     return {"compliant": 0, "non_compliant": 0, "total_checks": 0}
 
 
@@ -116,12 +120,12 @@ async def get_attack_map(
     user: dict = Depends(require_auth("security_events", "read")),
 ):
     """Get MITRE ATT&CK map of detected threats."""
-    audit_logger.log_event(
-        event_type="api_call",
-        user_id=user.get("user_id"),
-        resource_type="security_event",
-        resource_id=None,
-        action="attack_map",
-        outcome="success",
-    )
-    return {"tactics": [], "techniques": []}
+    query = """
+    SELECT attack_type, count() as count, avg(confidence) as avg_confidence
+    FROM security_events
+    WHERE timestamp >= now() - INTERVAL 24h
+    GROUP BY attack_type
+    ORDER BY count DESC
+    """
+    results = data_service._execute(query)
+    return {"tactics": results, "total_events": sum(r.get("count", 0) for r in results)}

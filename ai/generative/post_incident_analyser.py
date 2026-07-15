@@ -168,14 +168,19 @@ class PostIncidentAnalyser:
         """Identify what went well during the incident."""
         confidence = rco.get("confidence", 0)
         chain = rco.get("evidence_chain", [])
+        blast = rco.get("blast_radius", [])
 
         items = []
         if confidence >= 0.8:
-            items.append("Root cause was identified with high confidence ({:.0%})".format(confidence))
+            items.append(f"Root cause identified with {confidence:.0%} confidence")
         if len(chain) >= 3:
-            items.append(f"Strong evidence chain ({len(chain)} steps) was established")
-        items.append("Automated detection and analysis pipeline functioned correctly")
-        items.append("Blast radius was accurately scoped")
+            items.append(f"Strong evidence chain ({len(chain)} steps) established")
+        if len(chain) >= 1:
+            items.append("Detection pipeline captured relevant signals")
+        if blast and len(blast) <= 3:
+            items.append("Blast radius was well-contained")
+        if not items:
+            items.append("Incident was detected and logged")
 
         lines = ["## What Went Well\n"]
         for item in items:
@@ -183,20 +188,24 @@ class PostIncidentAnalyser:
         return "\n".join(lines)
 
     def _what_went_wrong(self, rco: dict[str, Any]) -> str:
-        """Identify what went wrong."""
+        """Identify what went wrong during the incident."""
         severity = rco.get("severity", "UNKNOWN")
         confidence = rco.get("confidence", 0)
         biz = rco.get("business_impact", {})
         users = biz.get("affected_users", 0)
+        blast = rco.get("blast_radius", [])
 
         items = []
         if severity in ("CRITICAL", "HIGH"):
             items.append(f"Incident reached {severity} severity before detection")
         if confidence < 0.7:
-            items.append(f"Root cause confidence was only {confidence:.0%}, indicating uncertain diagnosis")
+            items.append(f"Root cause confidence was only {confidence:.0%} — uncertain diagnosis")
         if users > 5000:
-            items.append(f"High user impact ({users:,} users) suggests insufficient preventive monitoring")
-        items.append("No automated remediation was available for this failure mode")
+            items.append(f"High user impact ({users:,} users) — insufficient preventive monitoring")
+        if blast and len(blast) > 5:
+            items.append(f"Wide blast radius ({len(blast)} services) — insufficient circuit breakers")
+        if not items:
+            items.append("Review incident timeline for improvement opportunities")
 
         lines = ["## What Went Wrong\n"]
         for item in items:

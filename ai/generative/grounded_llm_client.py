@@ -13,6 +13,8 @@ import os
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_SYSTEM_PROMPT = """You are OmniWatch 2.0's incident analysis assistant.
@@ -44,9 +46,9 @@ class GroundedLLMClient:
         base_url: str | None = None,
         model: str | None = None,
         system_prompt: str | None = None,
-        timeout: float = 30.0,
+        timeout: float = config.LLM_TIMEOUT,
     ):
-        self._base_url = base_url or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+        self._base_url = base_url or config.OLLAMA_BASE_URL
         self._model = model or os.environ.get("OLLAMA_MODEL", "qwen3:8b")
         self._system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
         self._timeout = timeout
@@ -119,8 +121,8 @@ class GroundedLLMClient:
             ],
             "stream": False,
             "options": {
-                "temperature": 0.3,
-                "num_predict": 2048,
+                "temperature": config.LLM_TEMPERATURE,
+                "num_predict": config.LLM_MAX_TOKENS,
             },
         }
 

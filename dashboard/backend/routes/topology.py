@@ -100,19 +100,29 @@ async def get_dependencies(
     user: dict = Depends(require_auth("topology", "read")),
 ):
     """Get dependencies of an entity."""
-    # TODO: Replace with real database lookup
-    entity = None  # db.get_entity(entity_id)
-    if not entity:
-        raise HTTPException(status_code=404, detail=f"Entity {entity_id} not found")
-    audit_logger.log_event(
-        event_type="api_call",
-        user_id=user.get("user_id"),
-        resource_type="topology",
-        resource_id=entity_id,
-        action="dependencies",
-        outcome="success",
-    )
-    return {"entity_id": entity_id, "dependencies": []}
+    try:
+        from storage.graph_store import GraphStore
+        graph = GraphStore()
+        query = "MATCH (n {id: $id})-[r]->(m) RETURN n, type(r) as rel_type, m"
+        results = graph.execute(query, {"id": entity_id})
+        if not results:
+            raise HTTPException(status_code=404, detail=f"Entity {entity_id} not found")
+        audit_logger.log_event(
+            event_type="api_call",
+            user_id=user.get("user_id"),
+            resource_type="topology",
+            resource_id=entity_id,
+            action="dependencies",
+            outcome="success",
+        )
+        return {"entity_id": entity_id, "dependencies": results}
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Kuzu unavailable for dependencies: {e}")
+        return {"entity_id": entity_id, "dependencies": [], "warning": "Graph store unavailable"}
 
 
 @router.get("/blast-radius/{entity_id}", response_model=BlastRadiusResponse)

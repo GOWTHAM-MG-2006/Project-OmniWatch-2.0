@@ -14,6 +14,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -37,8 +39,8 @@ class DigitalTwin:
         redis_port: int | None = None,
         redis_db: int = 2,
     ):
-        self.redis_host = redis_host or os.getenv("REDIS_HOST", "localhost")
-        self.redis_port = int(redis_port or os.getenv("REDIS_PORT", "6379"))
+        self.redis_host = redis_host or config.REDIS_HOST
+        self.redis_port = int(redis_port or config.REDIS_PORT)
         self.redis_db = redis_db
         self._redis = None
         self._memory_store: dict[str, str] = {}

@@ -15,6 +15,8 @@ import random
 from typing import Any
 from collections import defaultdict
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 # Sampling rates by priority

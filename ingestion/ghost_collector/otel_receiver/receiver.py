@@ -15,6 +15,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -35,14 +37,14 @@ class OTLPReceiver:
 
     def __init__(
         self,
-        grpc_port: int = 4317,
-        http_port: int = 4318,
+        grpc_port: int = config.OTLP_GRPC_PORT,
+        http_port: int = config.OTLP_HTTP_PORT,
         kafka_bootstrap: str | None = None,
         kafka_topic: str = "omniwatch.telemetry.raw",
     ):
         self.grpc_port = grpc_port
         self.http_port = http_port
-        self.kafka_bootstrap = kafka_bootstrap or os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+        self.kafka_bootstrap = kafka_bootstrap or config.KAFKA_BOOTSTRAP_SERVERS
         self.kafka_topic = kafka_topic
         self._producer = None
         self._received_count = 0

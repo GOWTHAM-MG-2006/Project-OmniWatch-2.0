@@ -15,6 +15,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -62,24 +64,79 @@ class RollbackManager:
         return None
 
     def execute_rollback(self, rollback_plan: dict[str, Any]) -> dict[str, Any]:
-        """Execute a rollback plan.
+        """Execute a rollback plan via kubectl or API.
 
         Returns:
             ActionResult dict.
         """
+        import subprocess
+        import time
+
         rollback_action = rollback_plan.get("rollback_action", {})
+        action_type = rollback_action.get("action_type", "rollback")
+        params = rollback_action.get("parameters", {})
+        deployment_name = params.get("deployment_name", "unknown")
+        namespace = params.get("namespace", "default")
+        to_revision = params.get("to_revision", "")
+
+        start_time = time.time()
+        success = False
+        output = ""
+        error_msg = None
+
+        try:
+            if action_type == "rollback":
+                cmd = ["kubectl", "rollout", "undo", f"deployment/{deployment_name}",
+                       "-n", namespace]
+                if to_revision:
+                    cmd.append(f"--to-revision={to_revision}")
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=config.K8S_ACTION_TIMEOUT)
+                success = result.returncode == 0
+                output = result.stdout if success else result.stderr
+                error_msg = None if success else result.stderr
+            elif action_type == "scale":
+                replicas = params.get("replicas", 1)
+                cmd = ["kubectl", "scale", f"deployment/{deployment_name}",
+                       f"--replicas={replicas}", "-n", namespace]
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=config.K8S_ACTION_TIMEOUT)
+                success = result.returncode == 0
+                output = result.stdout if success else result.stderr
+                error_msg = None if success else result.stderr
+            elif action_type == "restart":
+                cmd = ["kubectl", "rollout", "restart", f"deployment/{deployment_name}",
+                       "-n", namespace]
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=config.K8S_ACTION_TIMEOUT)
+                success = result.returncode == 0
+                output = result.stdout if success else result.stderr
+                error_msg = None if success else result.stderr
+            else:
+                error_msg = f"Unsupported rollback action type: {action_type}"
+                output = error_msg
+
+        except FileNotFoundError:
+            error_msg = "kubectl not found — install kubectl or run in Kubernetes environment"
+            output = error_msg
+        except subprocess.TimeoutExpired:
+            error_msg = "Rollback timed out after 300 seconds"
+            output = error_msg
+        except Exception as e:
+            error_msg = str(e)
+            output = error_msg
+
+        duration = round(time.time() - start_time, 2)
+
         return {
-            "action_type": rollback_action.get("action_type", "rollback"),
-            "entity_id": rollback_action.get("parameters", {}).get("deployment_name", "unknown"),
-            "success": True,
-            "output": f"Rollback {rollback_plan['rollback_id']} executed successfully",
-            "error": None,
-            "execution_time_seconds": rollback_plan.get("estimated_time_minutes", 5) * 60,
+            "action_type": action_type,
+            "entity_id": deployment_name,
+            "success": success,
+            "output": output[:500] if output else "",
+            "error": error_msg,
+            "execution_time_seconds": duration,
             "executed_at": datetime.now(timezone.utc).isoformat(),
             "triggered_by": "rollback",
-            "incident_id": "",
-            "simulaX_validated": False,
-            "simulation_id": "",
+            "incident_id": rollback_plan.get("incident_id", ""),
+            "simulaX_validated": rollback_plan.get("simulaX_validated", False),
+            "simulation_id": rollback_plan.get("simulation_id", ""),
         }
 
     def _determine_rollback_action(self, action_type: str, params: dict) -> dict[str, Any]:

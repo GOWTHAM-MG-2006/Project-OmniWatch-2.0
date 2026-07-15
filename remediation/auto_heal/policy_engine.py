@@ -16,9 +16,11 @@ from typing import Any
 
 import httpx
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
-OPA_BASE_URL = os.getenv("OPA_ENDPOINT", "http://localhost:8181")
+OPA_BASE_URL = config.OPA_URL
 
 
 class PolicyEngine:
@@ -112,25 +114,46 @@ class PolicyEngine:
     async def _query_opa(self, policy_path: str, input_data: dict) -> dict:
         """Query OPA REST API."""
         url = f"{self.opa_url}/v1/data/{policy_path}"
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with httpx.AsyncClient(timeout=config.OPA_HTTP_TIMEOUT) as client:
             resp = await client.post(url, json={"input": input_data})
             resp.raise_for_status()
             return resp.json().get("result", {})
 
     def _fallback_evaluate(self, input_data: dict) -> dict[str, Any]:
-        """Fallback logic when OPA is unavailable."""
-        severity = input_data.get("severity", "P4")
-        confidence = input_data.get("confidence", 0)
+        """Fallback logic when OPA is unavailable. Thresholds from config."""
+        severity_cutoff = config.POLICY_SEVERITY_CUTOFF
+        confidence_cutoff = config.POLICY_CONFIDENCE_CUTOFF
+        max_blast_radius = config.POLICY_MAX_BLAST_RADIUS
+
+        severity_order = {"P1": 1, "P2": 2, "P3": 3, "P4": 4}
+        action_severity = input_data.get("severity", "P3")
+        action_confidence = input_data.get("confidence", 0.5)
+        blast_radius = input_data.get("blast_radius", 1)
         source = input_data.get("source", "performance")
 
-        if source == "security" and input_data.get("attack_type") == "BRUTE_FORCE" and confidence > 0.9:
-            return {"decision": "auto-remediate", "policy_path": "fallback", "reason": "Brute force with high confidence"}
+        if source == "security" and input_data.get("attack_type") == "BRUTE_FORCE" and action_confidence > 0.9:
+            return {"decision": "auto-remediate", "policy_path": "fallback",
+                    "reason": "Brute force with high confidence",
+                    "thresholds_used": {"severity_cutoff": severity_cutoff, "confidence_cutoff": confidence_cutoff}}
 
-        if severity == "P1" and confidence > 0.95:
-            return {"decision": "auto-remediate", "policy_path": "fallback", "reason": "P1 with very high confidence"}
-        if severity in ("P1", "P2") and confidence > 0.7:
-            return {"decision": "approve-required", "policy_path": "fallback", "reason": "Medium confidence requires approval"}
-        if severity in ("P3", "P4"):
-            return {"decision": "reject", "policy_path": "fallback", "reason": "Low severity — no auto-remediation"}
+        approved = (
+            severity_order.get(action_severity, 4) <= severity_order.get(severity_cutoff, 2)
+            and action_confidence >= confidence_cutoff
+            and blast_radius <= max_blast_radius
+        )
 
-        return {"decision": "approve-required", "policy_path": "fallback", "reason": "Default: requires approval"}
+        decision = "auto-remediate" if approved else "approve-required"
+        if not approved and action_severity in ("P3", "P4"):
+            decision = "reject"
+
+        return {
+            "decision": decision,
+            "policy_path": "fallback",
+            "reason": f"Severity {action_severity} ({'meets' if approved else 'below'} cutoff {severity_cutoff}), "
+                      f"confidence {action_confidence:.2f} ({'meets' if action_confidence >= confidence_cutoff else 'below'} cutoff {confidence_cutoff})",
+            "thresholds_used": {
+                "severity_cutoff": severity_cutoff,
+                "confidence_cutoff": confidence_cutoff,
+                "max_blast_radius": max_blast_radius,
+            },
+        }

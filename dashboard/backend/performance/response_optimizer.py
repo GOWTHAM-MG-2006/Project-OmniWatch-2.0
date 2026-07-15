@@ -13,6 +13,8 @@ import gzip
 import logging
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,7 +24,7 @@ class ResponseOptimizer:
     def __init__(self):
         self._cache: dict[str, dict] = {}
 
-    def cache_response(self, path: str, response: dict, ttl: int = 30) -> bool:
+    def cache_response(self, path: str, response: dict, ttl: int = config.API_CACHE_TTL) -> bool:
         """Cache API response with TTL."""
         cache_key = hashlib.md5(path.encode()).hexdigest()
         self._cache[cache_key] = {"data": response, "ttl": ttl}
@@ -36,7 +38,7 @@ class ResponseOptimizer:
             return cached["data"]
         return None
 
-    def add_pagination(self, items: list, page: int = 1, page_size: int = 50) -> dict:
+    def add_pagination(self, items: list, page: int = 1, page_size: int = config.DEFAULT_PAGE_SIZE) -> dict:
         """Add cursor-based pagination."""
         total = len(items)
         start = (page - 1) * page_size

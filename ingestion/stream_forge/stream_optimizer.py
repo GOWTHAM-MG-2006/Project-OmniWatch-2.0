@@ -12,6 +12,8 @@ import re
 import logging
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 PII_PATTERNS = {
@@ -24,20 +26,50 @@ PII_PATTERNS = {
 class StreamOptimizer:
     """StreamForge performance optimization utilities."""
 
-    def __init__(self):
+    def __init__(self, redis_client=None):
+        self._redis = redis_client
         self._entity_cache: dict[str, dict] = {}
         self._compiled_patterns = {k: re.compile(v) for k, v in PII_PATTERNS.items()}
 
     def batch_entity_resolution(self, entities: list[dict]) -> list[dict]:
-        """Batch entity resolution using cache."""
+        """Batch entity resolution using Redis cache with deterministic ID generation."""
+        import hashlib
         results = []
         for entity in entities:
-            entity_id = entity.get("id")
-            if entity_id in self._entity_cache:
-                results.append(self._entity_cache[entity_id])
+            entity_id = entity.get("id", "")
+            entity_type = entity.get("type", "unknown")
+            metadata = entity.get("metadata", {})
+
+            cache_key = f"entity:{entity_id}"
+            cached = None
+
+            if self._redis:
+                try:
+                    cached_raw = self._redis.get(cache_key)
+                    if cached_raw:
+                        import json
+                        cached = json.loads(cached_raw)
+                except Exception:
+                    pass
+
+            if cached:
+                results.append(cached)
             else:
-                resolved = {"resolved_id": entity_id, "stable": True}
+                stable_id = hashlib.sha256(f"{entity_type}:{entity_id}".encode()).hexdigest()[:16]
+                resolved = {
+                    "resolved_id": stable_id,
+                    "original_id": entity_id,
+                    "entity_type": entity_type,
+                    "stable": True,
+                    "metadata": metadata,
+                }
                 self._entity_cache[entity_id] = resolved
+                if self._redis:
+                    try:
+                        import json
+                        self._redis.setex(cache_key, config.ENTITY_CACHE_TTL, json.dumps(resolved))
+                    except Exception:
+                        pass
                 results.append(resolved)
         return results
 

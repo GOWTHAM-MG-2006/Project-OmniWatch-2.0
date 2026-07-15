@@ -12,6 +12,8 @@ import re
 import logging
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,8 +21,8 @@ class QueryPlanner:
     """Creates execution plans from parsed NQL ASTs."""
 
     # Hot: < 1h, Warm: 1h–90d, Cold: > 90d
-    HOT_MAX_HOURS = 1
-    WARM_MAX_DAYS = 90
+    HOT_MAX_HOURS = config.NQL_HOT_MAX_HOURS
+    WARM_MAX_DAYS = config.NQL_WARM_MAX_DAYS
 
     def plan(self, ast: Any) -> dict[str, Any]:
         """Convert AST into an execution plan with tier routing."""

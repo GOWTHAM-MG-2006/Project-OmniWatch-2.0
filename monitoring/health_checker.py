@@ -15,6 +15,8 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -44,7 +46,7 @@ class HealthChecker:
                 import subprocess
                 proc = subprocess.run(
                     ["docker", "inspect", "--format", "{{.State.Status}}", name],
-                    capture_output=True, text=True, timeout=5,
+                    capture_output=True, text=True, timeout=config.DOCKER_TIMEOUT,
                 )
                 status = proc.stdout.strip()
                 results[name] = {
@@ -59,17 +61,17 @@ class HealthChecker:
     def check_api_endpoints(self) -> dict[str, Any]:
         """Check if API endpoints are responding."""
         endpoints = {
-            "dashboard_backend": "http://localhost:8000/health",
-            "minio": "http://localhost:9002/minio/health/live",
-            "opa": "http://localhost:8181/health",
-            "ollama": "http://localhost:11434/api/tags",
+            "dashboard_backend": config.DASHBOARD_BACKEND_URL,
+            "minio": config.MINIO_HEALTH_URL,
+            "opa": config.OPA_HEALTH_URL,
+            "ollama": config.OLLAMA_HEALTH_URL,
         }
 
         results = {}
         for name, url in endpoints.items():
             if HAS_REQUESTS:
                 try:
-                    resp = requests.get(url, timeout=3)
+                    resp = requests.get(url, timeout=config.HEALTH_CHECK_TIMEOUT)
                     results[name] = {
                         "status": "up" if resp.status_code < 400 else "degraded",
                         "level": "ok" if resp.status_code < 400 else "warning",
@@ -86,7 +88,7 @@ class HealthChecker:
         """Check Redis memory usage."""
         try:
             import redis
-            r = redis.Redis(host="localhost", port=6379, decode_responses=True)
+            r = redis.Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True)
             info = r.info("memory")
             used_mb = info.get("used_memory", 0) / 1024 / 1024
             return {

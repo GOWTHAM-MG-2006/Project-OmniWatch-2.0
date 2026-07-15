@@ -69,19 +69,8 @@ async def get_entity_metrics(
     user: dict = Depends(require_auth("metrics", "read")),
 ):
     """Get metrics for a specific entity."""
-    # TODO: Replace with real database lookup
-    entity = None  # db.get_entity(entity_id)
-    if not entity:
-        raise HTTPException(status_code=404, detail=f"Entity {entity_id} not found")
-    audit_logger.log_event(
-        event_type="api_call",
-        user_id=user.get("user_id"),
-        resource_type="metric",
-        resource_id=entity_id,
-        action="entity",
-        outcome="success",
-    )
-    return {"entity_id": entity_id, "metrics": []}
+    metrics = data_service.get_live_metrics(entity_id, "1h")
+    return {"metrics": metrics, "total": len(metrics)}
 
 
 @router.get("/summary", response_model=MetricsSummaryResponse)

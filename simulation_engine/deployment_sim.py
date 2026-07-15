@@ -115,10 +115,14 @@ class DeploymentSimulator:
     def _mock_deployment(
         self, resources: dict, strategy: str, canary_pct: float,
     ) -> dict[str, Any]:
-        """Mock deployment simulation."""
+        """Mock deployment simulation when SimPy is unavailable."""
+        import logging
+        logger.warning("SimPy not installed — using estimated deployment values. Install: pip install simpy")
         risk = random.uniform(0.05, 0.4)
         return {
             "risk_score": round(risk, 2),
-            "predicted_issues": ["mock simulation — SimPy not installed"],
+            "predicted_issues": ["SimPy not installed — using estimated values"],
             "rollback_plan": {"strategy": "manual-rollback", "estimated_time_minutes": 5},
+            "simulation_type": "estimated",
+            "note": "Install simpy for real simulation: pip install simpy",
         }

@@ -14,6 +14,8 @@ from collections import deque
 
 import numpy as np
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 # Try importing statsmodels for Granger causality; graceful fallback if missing
@@ -62,10 +64,10 @@ class CausalGraphTraversal:
 
     def __init__(
         self,
-        max_depth: int = 5,
+        max_depth: int = config.CAUSAL_MAX_DEPTH,
         use_granger: bool = True,
         granger_lag: int = 5,
-        min_granger_p: float = 0.05,
+        min_granger_p: float = config.GRANGER_MIN_P,
     ):
         self.max_depth = max_depth
         self.use_granger = use_granger and HAS_STATSMODELS
@@ -88,13 +90,14 @@ class CausalGraphTraversal:
             if dependencies:
                 return dependencies
         except Exception as exc:
-            logger.debug("Kuzu not available, using mock graph: %s", exc)
+            logger.warning("Kuzu unavailable (%s) — using fallback topology. Install Kuzu for real RCA.", exc)
 
         # Fall back to mock dependencies
         return self._mock_upstream(entity_id)
 
     def _mock_upstream(self, entity_id: str) -> list[dict[str, Any]]:
         """Return mock upstream dependencies for testing."""
+        logger.warning("Using mock topology for %s — connect to Kuzu for real data", entity_id)
         return MOCK_DEPENDENCIES.get(entity_id, [])
 
     # -- Granger causality ----------------------------------------------------

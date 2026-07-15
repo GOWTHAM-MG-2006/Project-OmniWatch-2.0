@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 
 import numpy as np
 
+from config import config
 from ai.causal.baseline_engine import BaselineEngine
 
 logger = logging.getLogger(__name__)
@@ -65,12 +66,12 @@ class AnomalyDetector:
     def __init__(
         self,
         baseline_engine: BaselineEngine | None = None,
-        z_threshold: float = 3.0,
-        ewma_alpha: float = 0.3,
-        ewma_threshold: float = 3.0,
-        iqr_multiplier: float = 1.5,
-        bocpd_threshold: float = 0.95,
-        min_anomaly_score: float = 0.25,
+        z_threshold: float = config.ANOMALY_Z_THRESHOLD,
+        ewma_alpha: float = config.EWMA_ALPHA,
+        ewma_threshold: float = config.EWMA_THRESHOLD,
+        iqr_multiplier: float = config.IQR_MULTIPLIER,
+        bocpd_threshold: float = config.BOCPD_THRESHOLD,
+        min_anomaly_score: float = config.MIN_ANOMALY_SCORE,
     ):
         self._baseline_engine = baseline_engine or BaselineEngine()
         self.z_threshold = z_threshold

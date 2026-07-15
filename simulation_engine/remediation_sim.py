@@ -118,17 +118,21 @@ class RemediationSimulator:
         self, proposed_action: dict[str, Any], target: str,
     ) -> dict[str, Any]:
         """Mock simulation when SimPy is unavailable."""
+        import logging
+        logger.warning("SimPy not installed — returning placeholder results. Install: pip install simpy")
         confidence = 0.85 + random.uniform(0, 0.10)
         recovery_time = random.uniform(3, 15)
         return {
             "predicted_outcome": {
                 "resolution_confidence": round(confidence, 2),
                 "recovery_time_minutes": round(recovery_time, 1),
-                "side_effects": ["mock simulation — SimPy not installed"],
+                "side_effects": ["SimPy not installed — using estimated values"],
                 "revenue_recovery_usd": self._estimate_revenue_recovery(target),
             },
             "risk_score": round(max(0.0, 1.0 - confidence), 2),
             "recommendation": "PROCEED" if confidence > 0.8 else "REVIEW",
+            "simulation_type": "estimated",
+            "note": "Install simpy for real simulation: pip install simpy",
         }
 
     def _simulate_rollback(self, env: simpy.Environment, resources: dict) -> float:

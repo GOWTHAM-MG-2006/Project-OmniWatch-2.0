@@ -17,6 +17,8 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from enum import Enum
 from typing import Any, Callable
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -63,14 +65,14 @@ class _TaskRecord:
 class AsyncProcessor:
     """ThreadPoolExecutor-based async processor with status tracking."""
 
-    def __init__(self, max_workers: int = 8):
+    def __init__(self, max_workers: int = config.ASYNC_MAX_WORKERS):
         self._executor = ThreadPoolExecutor(
             max_workers=max_workers,
             thread_name_prefix="omniwatch-bg",
         )
         self._tasks: dict[str, _TaskRecord] = {}
         self._lock = __import__("threading").Lock()
-        self._max_history = 500
+        self._max_history = config.ASYNC_MAX_HISTORY
 
     def _track_result(self, task_id: str, future: Future) -> None:
         with self._lock:
@@ -156,7 +158,7 @@ class AsyncProcessor:
             record = self._tasks.get(tid)
             if record and record.future:
                 try:
-                    record.future.result(timeout=30)
+                    record.future.result(timeout=config.TASK_FUTURE_TIMEOUT)
                     count += 1
                 except Exception:
                     count += 1

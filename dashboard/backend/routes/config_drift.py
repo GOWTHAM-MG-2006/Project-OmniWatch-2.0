@@ -104,7 +104,7 @@ async def get_config_drift(
     user: dict = Depends(require_auth("config_drift", "read")),
 ):
     """Get a specific config drift."""
-    drift = None
+    drift = data_service.get_config_drift(drift_id)
     if not drift:
         raise HTTPException(status_code=404, detail=f"Config drift {drift_id} not found")
     audit_logger.log_event(

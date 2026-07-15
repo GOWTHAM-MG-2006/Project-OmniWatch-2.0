@@ -14,6 +14,7 @@ import logging
 from typing import Any
 from datetime import datetime
 
+from config import config
 from topology.graph_database import TopoBrainGraph
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class BlastRadiusCalculator:
     def __init__(self, graph: TopoBrainGraph | None = None):
         self.graph = graph or TopoBrainGraph()
 
-    def calculate(self, entity_id: str, max_depth: int = 5) -> dict[str, Any]:
+    def calculate(self, entity_id: str, max_depth: int = config.BLAST_RADIUS_MAX_DEPTH) -> dict[str, Any]:
         """Calculate the blast radius starting from an entity.
 
         Traverses upstream dependencies to find all impacted entities.
@@ -48,7 +49,7 @@ class BlastRadiusCalculator:
             "calculated_at": datetime.utcnow().isoformat(),
         }
 
-    def get_impacted_chain(self, entity_id: str, max_depth: int = 5) -> list[dict[str, Any]]:
+    def get_impacted_chain(self, entity_id: str, max_depth: int = config.BLAST_RADIUS_MAX_DEPTH) -> list[dict[str, Any]]:
         """Get the impact chain (ordered list of affected entities)."""
         result = self.calculate(entity_id, max_depth)
         return result["impact_chain"]

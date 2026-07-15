@@ -5,15 +5,19 @@ interface ErrorAlertProps {
 
 export default function ErrorAlert({ message, onRetry }: ErrorAlertProps) {
   return (
-    <div className="bg-red-900/30 border border-red-700 rounded-lg p-4">
+    <div className="bg-red-900/30 border border-red-500/50 rounded-xl p-4 backdrop-blur-sm">
       <div className="flex items-start gap-3">
-        <svg className="w-5 h-5 text-red-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <div className="flex-1">
-          <p className="text-sm text-red-300">{message}</p>
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+          <span className="text-red-400 text-sm font-bold">!</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-red-200 font-medium">Error</p>
+          <p className="text-sm text-red-300/80 mt-1">{message}</p>
           {onRetry && (
-            <button onClick={onRetry} className="mt-2 text-sm text-red-400 hover:text-red-300 underline">
+            <button
+              onClick={onRetry}
+              className="mt-3 px-4 py-1.5 text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors duration-200"
+            >
               Try again
             </button>
           )}

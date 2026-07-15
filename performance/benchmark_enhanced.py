@@ -17,6 +17,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -43,9 +45,9 @@ HISTORY_DIR = Path(os.getenv("BENCHMARK_HISTORY_DIR", "performance/benchmark_his
 class EnhancedBenchmarkSuite:
     """Real benchmark suite with regression detection and markdown reporting."""
 
-    def __init__(self, api_base_url: str = "http://localhost:8000",
-                 clickhouse_host: str = "localhost",
-                 clickhouse_port: int = 9000):
+    def __init__(self, api_base_url: str = config.DASHBOARD_BACKEND_URL,
+                 clickhouse_host: str = config.CLICKHOUSE_HOST,
+                 clickhouse_port: int = config.CLICKHOUSE_PORT):
         self.api_base_url = api_base_url
         self.clickhouse_host = clickhouse_host
         self.clickhouse_port = clickhouse_port
@@ -87,8 +89,8 @@ class EnhancedBenchmarkSuite:
             client = clickhouse_connect.get_client(
                 host=self.clickhouse_host,
                 port=self.clickhouse_port,
-                connect_timeout=5,
-                send_receive_timeout=5,
+                connect_timeout=config.BENCHMARK_API_TIMEOUT,
+                send_receive_timeout=config.CH_SEND_RECEIVE_TIMEOUT,
             )
             latencies: list[float] = []
             for _ in range(5):
@@ -117,7 +119,7 @@ class EnhancedBenchmarkSuite:
             status_code = None
             for _ in range(5):
                 start = time.perf_counter()
-                resp = _requests.get(url, timeout=5)
+                resp = _requests.get(url, timeout=config.BENCHMARK_API_TIMEOUT)
                 elapsed_ms = (time.perf_counter() - start) * 1000
                 latencies.append(elapsed_ms)
                 status_code = resp.status_code

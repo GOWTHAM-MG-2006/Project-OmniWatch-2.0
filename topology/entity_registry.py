@@ -16,6 +16,8 @@ from typing import Any
 
 import redis
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,15 +30,15 @@ class EntityRegistry:
         redis_port: int | None = None,
         redis_db: int = 0,
     ):
-        self.redis_host = redis_host or os.getenv("REDIS_HOST", "localhost")
-        self.redis_port = int(redis_port or os.getenv("REDIS_PORT", "6379"))
+        self.redis_host = redis_host or config.REDIS_HOST
+        self.redis_port = int(redis_port or config.REDIS_PORT)
         self.redis_db = redis_db
         self._redis = None
 
         self.PREFIX_ENTITY = "ow:registry:entity:"
         self.PREFIX_STATUS = "ow:registry:status:"
         self.PREFIX_HISTORY = "ow:registry:history:"
-        self.TTL_SECONDS = 86400  # 24 hours
+        self.TTL_SECONDS = config.ENTITY_REGISTRY_TTL
 
     @property
     def client(self) -> redis.Redis:

@@ -19,6 +19,8 @@ import clickhouse_connect
 import redis
 import requests
 
+from config import config
+
 ALLOWED_HOSTS = re.compile(r'^(localhost|127\.0\.0\.1|[\w\-]+\.omniwatch\.io)$')
 BLOCKED_NETWORKS = re.compile(r'^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.)')
 
@@ -43,7 +45,7 @@ logger = logging.getLogger(__name__)
 class RegionManager:
     """Manages multi-region federation — registration, health checks, and region queries."""
 
-    HEALTH_CHECK_TIMEOUT = 10  # seconds
+    HEALTH_CHECK_TIMEOUT = config.FEDERATION_HEALTH_TIMEOUT
 
     def __init__(
         self,
@@ -52,10 +54,10 @@ class RegionManager:
         redis_host: str | None = None,
         redis_port: int | None = None,
     ):
-        self.ch_host = clickhouse_host or os.getenv("CLICKHOUSE_HOST", "localhost")
-        self.ch_port = int(clickhouse_port or os.getenv("CLICKHOUSE_PORT", "9000"))
-        self.redis_host = redis_host or os.getenv("REDIS_HOST", "localhost")
-        self.redis_port = int(redis_port or os.getenv("REDIS_PORT", "6379"))
+        self.ch_host = clickhouse_host or config.CLICKHOUSE_HOST
+        self.ch_port = int(clickhouse_port or config.CLICKHOUSE_PORT)
+        self.redis_host = redis_host or config.REDIS_HOST
+        self.redis_port = int(redis_port or config.REDIS_PORT)
         self._ch_client = None
         self._redis = None
 

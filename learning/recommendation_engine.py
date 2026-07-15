@@ -12,6 +12,7 @@ Technology: Scikit-Learn (similarity matching)
 import logging
 from typing import Any
 
+from config import config
 from learning.knowledge_base import KnowledgeBase
 
 logger = logging.getLogger(__name__)
@@ -121,14 +122,41 @@ class RecommendationEngine:
         recommendations.sort(key=lambda x: x["success_rate"], reverse=True)
         return recommendations[:limit]
 
-    def _default_recommendations(self, severity: str) -> list[dict[str, Any]]:
-        """Default recommendations when no historical data exists."""
+    def _default_recommendations(self, entity_type: str, severity: str) -> list[dict[str, Any]]:
+        """Query knowledge base for historical patterns before falling back to defaults."""
+        try:
+            import clickhouse_connect
+            client = clickhouse_connect.get_client(
+                host=config.CLICKHOUSE_HOST,
+                port=config.CLICKHOUSE_PORT,
+                database="omniwatch",
+            )
+            query = """
+                SELECT action_type, AVG(success_rate) as avg_success,
+                       COUNT(*) as usage_count
+                FROM knowledge_base
+                WHERE root_cause_entity_type = {et:String}
+                GROUP BY action_type
+                ORDER BY avg_success DESC
+                LIMIT 5
+            """
+            result = client.query(query, parameters={"et": entity_type})
+            if result.row_count > 0:
+                return [
+                    {"action_type": r[0], "success_rate": round(r[1], 2),
+                     "similarity": 0.5, "usage_count": r[2]}
+                    for r in result.result_rows
+                ]
+        except Exception:
+            pass
+
         defaults = {
-            "P1": [{"action_type": "rollback", "success_rate": 0.85, "similarity": 0, "note": "default for P1"}],
-            "P2": [{"action_type": "restart_pod", "success_rate": 0.80, "similarity": 0, "note": "default for P2"}],
-            "P3": [{"action_type": "scale", "success_rate": 0.70, "similarity": 0, "note": "default for P3"}],
+            "P1": [{"action_type": "rollback", "success_rate": 0.85, "similarity": 0, "note": "default — no historical data for this entity type"}],
+            "P2": [{"action_type": "restart_pod", "success_rate": 0.80, "similarity": 0, "note": "default — no historical data for this entity type"}],
+            "P3": [{"action_type": "scale_up", "success_rate": 0.75, "similarity": 0, "note": "default — no historical data for this entity type"}],
+            "P4": [{"action_type": "monitor", "success_rate": 0.70, "similarity": 0, "note": "default — no historical data for this entity type"}],
         }
-        return defaults.get(severity, [{"action_type": "restart_pod", "success_rate": 0.70, "similarity": 0}])
+        return defaults.get(severity, [{"action_type": "monitor", "success_rate": 0.70, "similarity": 0, "note": "default — no historical data"}])
 
     def _incident_to_text(self, incident: dict) -> str:
         """Convert incident to text for TF-IDF vectorization."""

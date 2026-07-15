@@ -15,6 +15,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from config import config
+
 try:
     import redis
     HAS_REDIS = True
@@ -48,8 +50,8 @@ class BayesianCalibrator:
     }
 
     def __init__(self, redis_host: str | None = None, redis_port: int | None = None, redis_db: int = 3):
-        self.redis_host = redis_host or os.getenv("REDIS_HOST", "localhost")
-        self.redis_port = int(redis_port or os.getenv("REDIS_PORT", "6379"))
+        self.redis_host = redis_host or config.REDIS_HOST
+        self.redis_port = int(redis_port or config.REDIS_PORT)
         self.redis_db = redis_db
         self._redis = None
         self._memory_store: dict[str, str] = {}
